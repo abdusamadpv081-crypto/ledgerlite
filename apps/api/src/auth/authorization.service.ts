@@ -74,6 +74,16 @@ export class AuthorizationService implements OnApplicationShutdown {
     context: AuthorizationContext,
   ): Promise<readonly RoleAssignment[]> {
     return this.withTenantContext(context, async (client) => {
+      if (context.branchId !== undefined) {
+        const branch = await client.query(
+          "SELECT id FROM platform.branch WHERE id = $1",
+          [context.branchId],
+        );
+        if (branch.rowCount !== 1) {
+          return [];
+        }
+      }
+
       const result = await client.query<{
         role_template: string;
         branch_id: string | null;

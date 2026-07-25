@@ -17,6 +17,7 @@ let companyAId: string;
 let companyBId: string;
 let branchAId: string;
 let branchBId: string;
+let foreignBranchId: string;
 let ownerUserId: string;
 let managerUserId: string;
 let cashierUserId: string;
@@ -48,6 +49,15 @@ beforeAll(async () => {
     [companyAId],
   );
   [branchAId, branchBId] = branches.rows.map((row) => row.id);
+
+  foreignBranchId = (
+    await pool.query<{ id: string }>(
+      `INSERT INTO platform.branch (company_id, code, name)
+       VALUES ($1, 'B1', 'Foreign branch')
+       RETURNING id`,
+      [companyBId],
+    )
+  ).rows[0].id;
 
   await pool.query(
     `INSERT INTO platform.company_user (company_id, user_id)
@@ -81,6 +91,9 @@ afterAll(async () => {
   );
   await pool.query("DELETE FROM platform.branch WHERE company_id = $1", [
     companyAId,
+  ]);
+  await pool.query("DELETE FROM platform.branch WHERE company_id = $1", [
+    companyBId,
   ]);
   await pool.query("DELETE FROM platform.company WHERE id IN ($1, $2)", [
     companyAId,
@@ -144,6 +157,17 @@ describe("AuthorizationService", () => {
       authorization.assertCapability(
         { actorUserId: ownerUserId, companyId: companyBId },
         "catalog.manage",
+      ),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+
+    await expect(
+      authorization.assertCapability(
+        {
+          actorUserId: ownerUserId,
+          companyId: companyAId,
+          branchId: foreignBranchId,
+        },
+        "inventory.manage",
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
