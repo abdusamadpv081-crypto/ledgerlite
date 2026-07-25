@@ -2,9 +2,33 @@ packages:
   - apps/*
   - packages/*
 
+overrides:
+  find-my-way: 9.7.0
+  js-yaml: 5.2.2
+  postcss: 8.5.22
+  sharp: 0.35.3
+
+# Nest 11.1.28's peer range has not yet caught up with the security-fixed
+# Fastify static plugin. API startup and Swagger serving are smoke-tested.
+peerDependencyRules:
+  allowedVersions:
+    "@nestjs/platform-fastify@11.1.28>@fastify/static": ^10.1.2
+
 # Explicitly approve only build scripts needed for local development/build output.
 allowBuilds:
   "@scarf/scarf": false
   esbuild: true
   msgpackr-extract: true
   sharp: true
+
+minimumReleaseAgeExclude:
+  - "@next/env@16.2.12"
+  - "@next/swc-darwin-arm64@16.2.12"
+  - "@next/swc-darwin-x64@16.2.12"
+  - "@next/swc-linux-arm64-gnu@16.2.12"
+  - "@next/swc-linux-arm64-musl@16.2.12"
+  - "@next/swc-linux-x64-gnu@16.2.12"
+  - "@next/swc-linux-x64-musl@16.2.12"
+  - "@next/swc-win32-arm64-msvc@16.2.12"
+  - "@next/swc-win32-x64-msvc@16.2.12"
+  - next@16.2.12
