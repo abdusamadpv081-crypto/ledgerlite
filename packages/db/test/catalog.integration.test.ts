@@ -163,6 +163,33 @@ describe("catalogue and policy tenant isolation", () => {
     ).rejects.toThrow();
   });
 
+  it("allows multiple products without SKUs but rejects duplicate or blank SKUs", async () => {
+    await asCompany(companyAId, async (client) => {
+      await client.query(
+        "INSERT INTO catalog.product (company_id, name) VALUES ($1, 'Unassigned SKU A'), ($1, 'Unassigned SKU B')",
+        [companyAId],
+      );
+    });
+
+    await expect(
+      asCompany(companyAId, (client) =>
+        client.query(
+          "INSERT INTO catalog.product (company_id, sku, name) VALUES ($1, 'SKU-1', 'Duplicate SKU')",
+          [companyAId],
+        ),
+      ),
+    ).rejects.toThrow(/unique/i);
+
+    await expect(
+      asCompany(companyAId, (client) =>
+        client.query(
+          "INSERT INTO catalog.product (company_id, sku, name) VALUES ($1, '', 'Blank SKU')",
+          [companyAId],
+        ),
+      ),
+    ).rejects.toThrow(/product_sku_not_blank/i);
+  });
+
   it("maintains updated_at for a mutable catalogue record", async () => {
     const before = await pool.query<{ updated_at: Date }>(
       "SELECT updated_at FROM catalog.product WHERE id = $1",

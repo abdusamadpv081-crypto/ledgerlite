@@ -28,6 +28,7 @@ describe("database migration ledger", () => {
       "000005_catalog_prices.sql",
       "000006_force_catalog_row_security.sql",
       "000007_maintain_updated_at.sql",
+      "000008_allow_multiple_unassigned_skus.sql",
     ]);
     expect(
       result.rows.every((row) => /^[a-f0-9]{64}$/.test(row.checksum)),
