@@ -42,6 +42,13 @@
 ## Day 4 — proposed
 
 - [ ] Decide initial inventory costing/valuation approach and document stock posting rules.
-- [ ] Turn design-system principles into implementable foundations: token naming, typography scale, spacing, breakpoints, and semantic colours.
-- [ ] Specify core component contracts: button, input, money input, table, status, dialog, and POS cart.
-- [ ] Create the first low-fidelity POS checkout and accounting-list wireframes.
+- [x] Turn design-system principles into implementable foundations: token naming, typography scale, spacing, breakpoints, and semantic colours.
+- [x] Specify core component contracts: button, input, money input, table, status, dialog, and POS cart.
+- [x] Create the first low-fidelity POS checkout and accounting-list wireframes.
+
+## Day 5 — proposed
+
+- [ ] Decide initial inventory costing/valuation approach and document stock posting rules.
+- [ ] Review checkout wireframes with a cashier/retailer and journals wireframe with an accountant.
+- [ ] Convert approved wireframes into a detailed screen-by-screen user-flow specification.
+- [ ] Choose the implementation stack and monorepo structure, then record architecture decisions.

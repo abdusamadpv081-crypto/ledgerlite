@@ -1,5 +1,7 @@
 # Ledger Lite design system — v0.1
 
+Implementation references: [foundations](foundations.md), [component contracts](components.md), and [first wireframes](wireframes.md).
+
 ## Product character
 
 Calm, professional, and data-forward. Accounting screens prioritize scanability and confidence; POS screens prioritize speed, large touch targets, and recovery from mistakes. Decoration must never compete with financial data or sale completion.
