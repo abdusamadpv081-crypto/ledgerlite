@@ -71,8 +71,8 @@ The server stores an accepted event ID and returns its prior outcome for repeate
 
 ## 8. Open decisions
 
-- Maximum permitted offline duration and cached-session duration.
-- Whether offline refunds require manager PIN/approval and how that approval is cached.
-- Initial stock policy: block at zero, allow negative stock with alerts, or allow only privileged override.
+- POS policy configuration is defined in [ADR-001](../04-architecture/adr/ADR-001-configurable-pos-operating-policies.md). The release-one defaults are: block cashier sales at zero stock with a reasoned manager override; a 72-hour offline operating window; and offline refunds disabled unless manager-approved.
+- Exact manager-PIN verification and cache/revocation mechanics.
+- Whether product-level inventory policy overrides are in MVP or follow soon after.
 - Receipt wording and whether a pending-sync marker is legally/operationally required for each payment method.
 - Device/browser support matrix and printer/scanner integration approach.

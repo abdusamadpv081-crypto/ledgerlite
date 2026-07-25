@@ -33,7 +33,8 @@
 
 ## Day 3 — proposed
 
-- [ ] Review BRD open decisions and validate with at least one prospective retailer/accountant.
-- [ ] Decide offline policy: session/offline duration, refund approval, negative-stock behavior, and hardware/browser support.
+- [x] Decide policy architecture: company/branch configuration, safe defaults, and audit/versioning requirements.
+- [x] Decide recommended offline policy defaults: stock override, 72-hour operating window, and manager-approved offline refunds.
+- [ ] Review the policy defaults with at least one prospective retailer/accountant.
 - [ ] Define permission capabilities and role templates.
 - [ ] Produce the first accounting data model: accounts, journals, journal entries, tax, fiscal periods, and source-event links.
