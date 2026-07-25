@@ -57,13 +57,13 @@
 
 ## Day 6 — proposed
 
-- [ ] Define authentication/session model and offline cashier-PIN controls.
-- [ ] Define device registration, data cache scope, supported browser/OS, and printer/scanner strategy.
+- [x] Define authentication/session model and offline cashier-PIN controls.
+- [x] Define device registration, data cache scope, and initial browser/OS direction.
 - [ ] Research UAE payment providers and select the MVP payment model: cash/manual only versus integrated online terminal.
 - [ ] Prepare pilot-customer interview guide and validate core POS/accounting workflows.
 
 ## Engineering readiness milestone
 
 - [x] Establish first vertical-slice scope and acceptance criteria.
-- [ ] Approve authentication/device-security decisions.
+- [x] Approve authentication/device-security decisions; production OIDC vendor remains a pilot-launch gate.
 - [ ] Scaffold monorepo and CI, then implement the first vertical slice.

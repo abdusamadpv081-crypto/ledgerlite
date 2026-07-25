@@ -13,6 +13,7 @@
 Every state-changing endpoint requires:
 
 - authenticated actor and tenant/branch authorization;
+- authenticated registered device context for POS device commands;
 - request schema validation;
 - an idempotency key for retryable client/POS commands;
 - server-generated correlation/trace ID;
