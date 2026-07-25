@@ -163,6 +163,34 @@ describe("platform tenant isolation", () => {
     ).rejects.toThrow(/foreign key/i);
   });
 
+  it("requires branch scope for operational roles", async () => {
+    await expect(
+      asCompany(companyAId, (client) =>
+        client.query(
+          `INSERT INTO platform.role_assignment
+             (company_id, company_user_id, role_template)
+           SELECT company_id, id, 'cashier'
+           FROM platform.company_user
+           WHERE company_id = $1 AND user_id = $2`,
+          [companyAId, userId],
+        ),
+      ),
+    ).rejects.toThrow(/role_assignment_scope_valid/i);
+
+    await expect(
+      asCompany(companyAId, (client) =>
+        client.query(
+          `INSERT INTO platform.role_assignment
+             (company_id, company_user_id, branch_id, role_template)
+           SELECT company_id, id, $2, 'owner'
+           FROM platform.company_user
+           WHERE company_id = $1 AND user_id = $3`,
+          [companyAId, branchAId, userId],
+        ),
+      ),
+    ).rejects.toThrow(/role_assignment_scope_valid/i);
+  });
+
   it("scopes memberships and roles, and denies audit mutation", async () => {
     const visible = await asCompany(companyAId, async (client) => {
       const memberships = await client.query(
