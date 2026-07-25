@@ -18,8 +18,8 @@ This is the release-one logical schema. Columns listed as `FK` must also preserv
 
 | Table                     | Key fields                                                          | Notes                                                               |
 | ------------------------- | ------------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `catalog.product`         | `id`, company FK, SKU, name, kind, active, default tax code         | Product master; SKU unique per company when present.                |
-| `catalog.product_barcode` | product/company FK, barcode, symbology, active                      | Barcode unique per company while active.                            |
+| `catalog.product`         | `id`, company FK, SKU, name, kind, active, default tax code         | Product master; a nonblank SKU is unique per company when supplied. |
+| `catalog.product_barcode` | product/company FK, barcode, symbology, active                      | Barcode unique per company; inactive values remain reserved.        |
 | `catalog.product_branch`  | product/branch FK, sellable, reorder settings                       | Branch availability/configuration.                                  |
 | `catalog.price_list`      | company FK, currency, effective dates, status                       | Supports future price lists.                                        |
 | `catalog.price_list_item` | price-list/product FK, unit price, effective dates                  | No price overwrite; new effective record.                           |

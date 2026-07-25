@@ -31,11 +31,11 @@ exists.
 
 ## E03 — Product and inventory
 
-| Story                             | Status      | Evidence / remaining work                                                                                                                                   |
-| --------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| US-020 Maintain product catalogue | In progress | Tax, product, barcode, branch availability, and policy read-model migration is in progress. Price support, management API/UI, and integration tests remain. |
-| US-021 Receive stock              | Planned     | Requires inventory locations and immutable stock movements.                                                                                                 |
-| US-022 Adjust stock               | Planned     | Depends on stock movements, reason controls, and audit flow.                                                                                                |
+| Story                             | Status      | Evidence / remaining work                                                                                                                                                                                                                                       |
+| --------------------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-020 Maintain product catalogue | In progress | Tax, product, barcode, branch availability, price, policy, RLS, and catalogue database tests: `2b30585`, `cd452bc`, `b952bbd`, `c783308`. Production management API/UI, barcode workflow, branch controls, authorization, and story acceptance evidence remain. |
+| US-021 Receive stock              | Planned     | Requires inventory locations and immutable stock movements.                                                                                                                                                                                                     |
+| US-022 Adjust stock               | Planned     | Depends on stock movements, reason controls, and audit flow.                                                                                                                                                                                                    |
 
 ## E04 — Offline POS
 

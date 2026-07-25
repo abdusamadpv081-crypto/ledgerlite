@@ -70,13 +70,13 @@
 - [x] Create monorepo and initial API/web/worker/database scaffold.
 - [x] Document database schema, data dictionary, integrity procedures, and operations/recovery requirements.
 - [x] Install dependencies; run initial type checks and application builds; add CI migration validation.
-- [ ] Add formatting, linting, test, and supply-chain quality checks to CI.
+- [x] Add formatting, linting, test, supply-chain, and CodeQL quality checks to CI.
 - [ ] Implement the first vertical slice.
 
 ## Day 7 — proposed engineering work
 
 - [x] Bring up local PostgreSQL and Redis, apply baseline migration, and verify baseline schemas.
 - [x] Add CI for type checks, application builds, and migration validation.
-- [ ] Add CI formatting, linting, test, and supply-chain checks.
-- [ ] Implement company/branch/device schema and tenant-isolation tests.
+- [x] Add CI formatting, linting, test, supply-chain, and CodeQL checks.
+- [x] Implement company/branch/device schema and tenant-isolation tests.
 - [ ] Implement the first Dexie schema and local POS outbox test.
