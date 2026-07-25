@@ -67,4 +67,14 @@
 - [x] Establish first vertical-slice scope and acceptance criteria.
 - [x] Approve authentication/device-security decisions; production OIDC vendor remains a pilot-launch gate.
 - [x] Approve MVP payment/hardware boundary; payment-provider integration remains a later pilot gate.
-- [ ] Scaffold monorepo and CI, then implement the first vertical slice.
+- [x] Create monorepo and initial API/web/worker/database scaffold.
+- [x] Document database schema, data dictionary, integrity procedures, and operations/recovery requirements.
+- [ ] Install dependencies, run the initial scaffold checks, and add CI.
+- [ ] Implement the first vertical slice.
+
+## Day 7 — proposed engineering work
+
+- [ ] Bring up local PostgreSQL and Redis, apply baseline migration, and verify database-role/migration workflow.
+- [ ] Add CI for formatting, type checks, tests, and migration validation.
+- [ ] Implement company/branch/device schema and tenant-isolation tests.
+- [ ] Implement the first Dexie schema and local POS outbox test.

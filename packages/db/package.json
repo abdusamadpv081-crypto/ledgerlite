@@ -1,0 +1,20 @@
+{
+  "name": "@ledgerlite/db",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "generate": "drizzle-kit generate",
+    "migrate": "drizzle-kit migrate",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.0",
+    "pg": "^8.0.0"
+  },
+  "devDependencies": {
+    "drizzle-kit": "^0.31.0",
+    "@types/pg": "^8.0.0"
+  }
+}

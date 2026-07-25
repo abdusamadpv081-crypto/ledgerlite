@@ -1,0 +1,8 @@
+{
+  "name": "@ledgerlite/domain",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "dependencies": { "zod": "^3.24.0" }
+}

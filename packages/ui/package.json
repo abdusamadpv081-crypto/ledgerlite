@@ -1,0 +1,8 @@
+{
+  "name": "@ledgerlite/ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "peerDependencies": { "react": "^19.0.0" }
+}
