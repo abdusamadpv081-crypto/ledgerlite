@@ -86,7 +86,7 @@ describe("operator company provisioning schema", () => {
     }
   });
 
-  it("grants the dedicated operator role only the provisioning record access", async () => {
+  it("grants the dedicated operator role provisioning record access", async () => {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");

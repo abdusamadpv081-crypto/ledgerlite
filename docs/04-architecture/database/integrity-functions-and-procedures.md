@@ -15,6 +15,20 @@ COMMIT;
 
 The application never performs a separate committed write for the event, stock effect, journal, and audit effect of one accepted command.
 
+## Assisted pilot provisioning
+
+The `provision:pilot-owner` operator command uses one transaction with a
+transaction advisory lock keyed by the external operations reference. It
+temporarily assumes `ledgerlite_operator` to read/write the immutable
+provisioning record, and `ledgerlite_app` to create tenant-scoped data under
+transaction-local company/actor context.
+
+It creates the first owner identity (only when absent and active), company,
+branch, membership, owner role, and `company.provisioned` audit event before
+recording the provisioning reference. A unique reference makes retries
+idempotent; a reference bound to a different identity fails safely. The runtime
+API role cannot read or write the operator record.
+
 ## Required database functions
 
 | Function                                                   | Responsibility                                                                                             |

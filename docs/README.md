@@ -12,6 +12,7 @@
 | [Delivery](06-delivery/backlog.md)                                | Prioritized MVP roadmap.                                                   |
 | [Project operating model](06-delivery/project-operating-model.md) | Source-of-truth rules, work-item lifecycle, quality gates, and milestones. |
 | [Story tracker](06-delivery/story-tracker.md)                     | MVP story status, completed enablers, acceptance evidence, and blockers.   |
+| [Pilot provisioning](06-delivery/assisted-pilot-provisioning.md)  | Secure assisted setup of the first pilot company owner and branch.         |
 | [Repository review](06-delivery/repository-review-2026-07-25.md)  | Review evidence, resolved findings, and remediation order.                 |
 
 ## Working agreement
