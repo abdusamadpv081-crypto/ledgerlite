@@ -32,15 +32,15 @@ Calm, professional, and data-forward. Accounting screens prioritize scanability 
 
 ## Core components for MVP
 
-| Component | Required variants/behaviour |
-| --- | --- |
-| Button | primary, secondary, tertiary, destructive; loading and disabled states; keyboard focus. |
-| Input | text, money, quantity, barcode/search; label, help, error, read-only states. |
-| Data table | sortable columns, numeric alignment, empty/loading/error states, responsive strategy. |
-| Status badge | semantic status plus readable label and icon where helpful. |
-| Dialog | explicit title, keyboard trap/escape behaviour, dangerous-action confirmation. |
-| Toast/alert | success, warning, error, offline/sync status; never the only record of an error. |
-| POS cart | items, quantity edits, discounts, tax, totals, payment selection, pending-sync indicator. |
+| Component    | Required variants/behaviour                                                               |
+| ------------ | ----------------------------------------------------------------------------------------- |
+| Button       | primary, secondary, tertiary, destructive; loading and disabled states; keyboard focus.   |
+| Input        | text, money, quantity, barcode/search; label, help, error, read-only states.              |
+| Data table   | sortable columns, numeric alignment, empty/loading/error states, responsive strategy.     |
+| Status badge | semantic status plus readable label and icon where helpful.                               |
+| Dialog       | explicit title, keyboard trap/escape behaviour, dangerous-action confirmation.            |
+| Toast/alert  | success, warning, error, offline/sync status; never the only record of an error.          |
+| POS cart     | items, quantity edits, discounts, tax, totals, payment selection, pending-sync indicator. |
 
 ## RTL and localization rules
 

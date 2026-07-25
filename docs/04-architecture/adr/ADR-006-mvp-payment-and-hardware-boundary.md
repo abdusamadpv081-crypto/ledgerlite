@@ -16,12 +16,12 @@ This permits a retailer to conduct real checkout/shift/accounting workflows whil
 
 ## Payment states
 
-| Payment method | MVP state source | Offline permitted | Meaning |
-| --- | --- | --- | --- |
-| Cash | POS cash count | Yes | Cash received by cashier; subject to shift reconciliation. |
-| External terminal card | Cashier merchant-attestation | Only when terminal/provider independently confirms payment | Card processed outside Ledger Lite; terminal reference may be recorded. |
-| Integrated terminal | Future provider adapter | Not in MVP | Provider response is authoritative. |
-| Offline card | Future provider/terminal feature | Not in MVP | Requires explicit risk/limits/reconciliation design. |
+| Payment method         | MVP state source                 | Offline permitted                                          | Meaning                                                                 |
+| ---------------------- | -------------------------------- | ---------------------------------------------------------- | ----------------------------------------------------------------------- |
+| Cash                   | POS cash count                   | Yes                                                        | Cash received by cashier; subject to shift reconciliation.              |
+| External terminal card | Cashier merchant-attestation     | Only when terminal/provider independently confirms payment | Card processed outside Ledger Lite; terminal reference may be recorded. |
+| Integrated terminal    | Future provider adapter          | Not in MVP                                                 | Provider response is authoritative.                                     |
+| Offline card           | Future provider/terminal feature | Not in MVP                                                 | Requires explicit risk/limits/reconciliation design.                    |
 
 ## Required controls
 

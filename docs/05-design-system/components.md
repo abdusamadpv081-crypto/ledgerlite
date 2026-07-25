@@ -6,12 +6,12 @@ Each component must implement all documented states before it is reused. “Look
 
 **Purpose:** trigger a deliberate user action.
 
-| Variant | Use | Rules |
-| --- | --- | --- |
-| Primary | Main action in a region: `Complete sale`, `Save`. | One dominant action per region; never destructive. |
-| Secondary | Supporting action: `Cancel`, `Print`. | Lower visual emphasis. |
-| Tertiary/ghost | Low-emphasis contextual action. | Must retain visible focus and sufficient hit area. |
-| Destructive | `Refund`, `Void`, `Delete`. | Require confirmation when consequence is not immediately reversible. |
+| Variant        | Use                                               | Rules                                                                |
+| -------------- | ------------------------------------------------- | -------------------------------------------------------------------- |
+| Primary        | Main action in a region: `Complete sale`, `Save`. | One dominant action per region; never destructive.                   |
+| Secondary      | Supporting action: `Cancel`, `Print`.             | Lower visual emphasis.                                               |
+| Tertiary/ghost | Low-emphasis contextual action.                   | Must retain visible focus and sufficient hit area.                   |
+| Destructive    | `Refund`, `Void`, `Delete`.                       | Require confirmation when consequence is not immediately reversible. |
 
 **API concept:** `variant`, `size`, `isLoading`, `isDisabled`, `iconStart`, `iconEnd`, `type`.
 
@@ -21,12 +21,12 @@ Each component must implement all documented states before it is reused. “Look
 
 **Purpose:** structured entry with a persistent label, help/error association, and safe value parsing.
 
-| Input | Special contract |
-| --- | --- |
-| Search/barcode | Scanner input must reach the intended field after checkout readiness; Enter submits only unambiguous results. |
-| Money | Accept locale-aware input, store decimal string/precise value, display currency context, reject float rounding ambiguity. |
-| Quantity | Accept only permitted precision; provide keyboard increment/decrement where applicable. |
-| Password/PIN | Never reveal by default; rate-limit/policy protect verification; no value in logs. |
+| Input          | Special contract                                                                                                          |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Search/barcode | Scanner input must reach the intended field after checkout readiness; Enter submits only unambiguous results.             |
+| Money          | Accept locale-aware input, store decimal string/precise value, display currency context, reject float rounding ambiguity. |
+| Quantity       | Accept only permitted precision; provide keyboard increment/decrement where applicable.                                   |
+| Password/PIN   | Never reveal by default; rate-limit/policy protect verification; no value in logs.                                        |
 
 **States:** default, hover, focus-visible, filled, read-only, disabled, validation error, loading/async validation.
 
@@ -47,12 +47,12 @@ Each component must implement all documented states before it is reused. “Look
 
 **Purpose:** communicate a stable record or system state.
 
-| State family | Required label examples | Treatment |
-| --- | --- | --- |
-| Positive | Synced, Posted, Closed | Success semantic token plus readable text. |
-| Attention | Pending sync, Needs review, Closing | Warning token plus plain-language next action. |
-| Negative | Rejected, Failed, Overdue | Danger token plus reason/detail path. |
-| Neutral | Draft, Open, Archived | Neutral surface/border and label. |
+| State family | Required label examples             | Treatment                                      |
+| ------------ | ----------------------------------- | ---------------------------------------------- |
+| Positive     | Synced, Posted, Closed              | Success semantic token plus readable text.     |
+| Attention    | Pending sync, Needs review, Closing | Warning token plus plain-language next action. |
+| Negative     | Rejected, Failed, Overdue           | Danger token plus reason/detail path.          |
+| Neutral      | Draft, Open, Archived               | Neutral surface/border and label.              |
 
 The POS shell has a persistent sync indicator. It must state both network connectivity and unsynced-event state; “Online” alone is not proof that all sales have synchronized.
 
@@ -67,12 +67,12 @@ The POS shell has a persistent sync indicator. It must state both network connec
 
 ## 6. Alert, toast, and inline validation
 
-| Pattern | Use |
-| --- | --- |
-| Inline field error | Correctable form data problem. |
-| Page/region alert | Persistent operational issue such as failed sync or closed fiscal period. |
-| Toast | Confirm a completed non-critical action; never the only presentation of a failure requiring resolution. |
-| Exception item | Durable assigned issue with reason, state, owner, and next action. |
+| Pattern            | Use                                                                                                     |
+| ------------------ | ------------------------------------------------------------------------------------------------------- |
+| Inline field error | Correctable form data problem.                                                                          |
+| Page/region alert  | Persistent operational issue such as failed sync or closed fiscal period.                               |
+| Toast              | Confirm a completed non-critical action; never the only presentation of a failure requiring resolution. |
+| Exception item     | Durable assigned issue with reason, state, owner, and next action.                                      |
 
 ## 7. POS cart
 

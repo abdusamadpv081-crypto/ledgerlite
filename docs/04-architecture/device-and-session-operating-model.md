@@ -13,14 +13,14 @@ Registered device
 
 ## Key states
 
-| State | POS behavior |
-| --- | --- |
-| Ready online | Registered device, valid online session, current policy/cache. All authorized online POS actions available. |
-| Ready offline | Valid offline grant and PIN-unlocked cashier session. Only listed offline capabilities available. |
-| Offline nearing expiry | Shows warning; staff continue limited work but must reconnect before grant expiry. |
-| Offline expired | Shows blocking state for new sales; preserves and surfaces outbox until reconnection. |
-| Needs attention | Unsynced/rejected event, policy mismatch, or device health issue; cashier sees clear next action. |
-| Suspended/revoked | Once device receives server state, stop use and follow safe outbox/support procedure. |
+| State                  | POS behavior                                                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Ready online           | Registered device, valid online session, current policy/cache. All authorized online POS actions available. |
+| Ready offline          | Valid offline grant and PIN-unlocked cashier session. Only listed offline capabilities available.           |
+| Offline nearing expiry | Shows warning; staff continue limited work but must reconnect before grant expiry.                          |
+| Offline expired        | Shows blocking state for new sales; preserves and surfaces outbox until reconnection.                       |
+| Needs attention        | Unsynced/rejected event, policy mismatch, or device health issue; cashier sees clear next action.           |
+| Suspended/revoked      | Once device receives server state, stop use and follow safe outbox/support procedure.                       |
 
 ## Session and handover rules
 

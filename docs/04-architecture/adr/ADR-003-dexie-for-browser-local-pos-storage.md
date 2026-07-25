@@ -36,13 +36,13 @@ Dexie does **not** store the full company ledger, all historical reporting data,
 
 ## Alternatives considered
 
-| Alternative | Decision |
-| --- | --- |
-| Native IndexedDB | Rejected for MVP: unnecessarily low-level and error-prone for transactional POS storage. |
-| RxDB | Deferred: its replication/conflict framework is more than the MVP needs and would not remove the need for financial-domain validation. |
-| PouchDB/CouchDB | Rejected: would impose a CouchDB-oriented replication model while PostgreSQL is the cloud accounting authority. |
-| ElectricSQL | Deferred for future evaluation: promising PostgreSQL sync approach, but introduces a new synchronization platform before evidence of need. |
-| Browser SQLite/OPFS | Deferred: higher implementation and cross-browser testing cost for the initial local dataset. |
+| Alternative         | Decision                                                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Native IndexedDB    | Rejected for MVP: unnecessarily low-level and error-prone for transactional POS storage.                                                   |
+| RxDB                | Deferred: its replication/conflict framework is more than the MVP needs and would not remove the need for financial-domain validation.     |
+| PouchDB/CouchDB     | Rejected: would impose a CouchDB-oriented replication model while PostgreSQL is the cloud accounting authority.                            |
+| ElectricSQL         | Deferred for future evaluation: promising PostgreSQL sync approach, but introduces a new synchronization platform before evidence of need. |
+| Browser SQLite/OPFS | Deferred: higher implementation and cross-browser testing cost for the initial local dataset.                                              |
 
 ## Consequences
 

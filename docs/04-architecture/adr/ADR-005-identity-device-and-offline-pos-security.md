@@ -79,11 +79,11 @@ Web Crypto is available in secure contexts and supports password-based key deriv
 
 ## Offline capabilities
 
-| Role | Permitted offline capability | Not permitted offline |
-| --- | --- | --- |
-| Cashier | Start/continue own permitted shift, cash/manual sale, permitted manual discount, view locally available receipt, close request. | Company setup, product/customer changes, reports, journal access, policy changes, unrestricted refund. |
-| Manager | Cashier actions; approve configured refund/discount/negative-stock exception using own PIN; review local sync queue. | Tenant/security/policy changes, period close, chart/tax changes. |
-| Accountant/owner | No offline back-office mode. | All accounting/admin actions while offline. |
+| Role             | Permitted offline capability                                                                                                    | Not permitted offline                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Cashier          | Start/continue own permitted shift, cash/manual sale, permitted manual discount, view locally available receipt, close request. | Company setup, product/customer changes, reports, journal access, policy changes, unrestricted refund. |
+| Manager          | Cashier actions; approve configured refund/discount/negative-stock exception using own PIN; review local sync queue.            | Tenant/security/policy changes, period close, chart/tax changes.                                       |
+| Accountant/owner | No offline back-office mode.                                                                                                    | All accounting/admin actions while offline.                                                            |
 
 An offline manager approval is a separate immutable local record that names approver, action, target event, reason, timestamp, and policy version. Separation-of-duties policy can prohibit self-approval.
 

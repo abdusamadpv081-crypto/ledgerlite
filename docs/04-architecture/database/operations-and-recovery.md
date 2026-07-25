@@ -2,13 +2,13 @@
 
 ## Roles
 
-| Role | Capability |
-| --- | --- |
-| Migration role | Applies reviewed DDL/functions/RLS changes; never used by API at runtime. |
-| API role | Least-privilege access to application schemas; no schema ownership or bypass-RLS privilege. |
-| Worker role | API-equivalent access plus only required job tables/functions. |
-| Read-only reporting role | Read-only reporting views; no base-table writes. |
-| Break-glass operations role | Time-bound, audited production support; separate credentials and approval. |
+| Role                        | Capability                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| Migration role              | Applies reviewed DDL/functions/RLS changes; never used by API at runtime.                   |
+| API role                    | Least-privilege access to application schemas; no schema ownership or bypass-RLS privilege. |
+| Worker role                 | API-equivalent access plus only required job tables/functions.                              |
+| Read-only reporting role    | Read-only reporting views; no base-table writes.                                            |
+| Break-glass operations role | Time-bound, audited production support; separate credentials and approval.                  |
 
 ## Backup and recovery requirements
 

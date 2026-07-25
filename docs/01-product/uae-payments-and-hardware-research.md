@@ -66,14 +66,14 @@ For MVP, use manual opening or a drawer controlled through the chosen receipt-pr
 
 ## Pilot hardware profile
 
-| Item | Initial support stance |
-| --- | --- |
-| POS host | Windows desktop/laptop using current Chrome or Edge. |
-| Barcode scanner | USB or Bluetooth keyboard-wedge scanner. |
+| Item            | Initial support stance                                                                                  |
+| --------------- | ------------------------------------------------------------------------------------------------------- |
+| POS host        | Windows desktop/laptop using current Chrome or Edge.                                                    |
+| Barcode scanner | USB or Bluetooth keyboard-wedge scanner.                                                                |
 | Receipt printer | Any OS-supported printer via print dialog; certify one Epson/Star model before direct-print commitment. |
-| Cash drawer | Manual or connected to the certified receipt printer; no direct-browser guarantee. |
-| Card terminal | Merchant-supplied/acquirer-supplied external terminal, processed independently. |
-| Tablet | Android Chrome is a later pilot option after printer/terminal testing. |
+| Cash drawer     | Manual or connected to the certified receipt printer; no direct-browser guarantee.                      |
+| Card terminal   | Merchant-supplied/acquirer-supplied external terminal, processed independently.                         |
+| Tablet          | Android Chrome is a later pilot option after printer/terminal testing.                                  |
 
 ## Provider/pilot due-diligence checklist
 

@@ -6,15 +6,15 @@ PostgreSQL is Ledger Lite’s authoritative system of record. Browser Dexie stor
 
 ## PostgreSQL schemas
 
-| Schema | Responsibility |
-| --- | --- |
-| `platform` | Tenants/companies, users, branches, devices, roles/capabilities, policy configuration. |
-| `catalog` | Products, barcodes, prices, taxes, customer references. |
-| `inventory` | Locations, immutable stock movements, valuation records, stock exceptions. |
-| `pos` | Cash shifts, receipts, sales, sale lines, payment attempts, sync events. |
-| `accounting` | Chart of accounts, fiscal periods, journal entries/lines, tax periods. |
-| `audit` | Append-only security/configuration/business-action audit events. |
-| `reporting` | Read-only views/materialized views; never the source of truth. |
+| Schema       | Responsibility                                                                         |
+| ------------ | -------------------------------------------------------------------------------------- |
+| `platform`   | Tenants/companies, users, branches, devices, roles/capabilities, policy configuration. |
+| `catalog`    | Products, barcodes, prices, taxes, customer references.                                |
+| `inventory`  | Locations, immutable stock movements, valuation records, stock exceptions.             |
+| `pos`        | Cash shifts, receipts, sales, sale lines, payment attempts, sync events.               |
+| `accounting` | Chart of accounts, fiscal periods, journal entries/lines, tax periods.                 |
+| `audit`      | Append-only security/configuration/business-action audit events.                       |
+| `reporting`  | Read-only views/materialized views; never the source of truth.                         |
 
 Database migrations create these schemas explicitly. Application database roles receive least-privilege access; clients never connect directly to PostgreSQL.
 
@@ -29,18 +29,18 @@ Database migrations create these schemas explicitly. Application database roles 
 
 ## Common columns and types
 
-| Field | Rule |
-| --- | --- |
-| `id` | UUID primary key. |
-| `company_id` | UUID, mandatory on tenant data. |
-| `created_at`, `updated_at` | `timestamptz`, always UTC. Immutable tables omit `updated_at`. |
-| `created_by_user_id` | Nullable only for system/import activity; otherwise actor reference. |
-| `occurred_at` | Business/event time; distinct from record creation time. |
-| `currency_code` | ISO 4217 uppercase char(3); company base currency is AED in UAE MVP. |
-| `amount` | `numeric(20,6)`, never floating point. Display/rounding follows currency/tax policy. |
-| `quantity` | `numeric(20,6)`, never floating point. |
-| `status` | Constrained text/check or PostgreSQL enum only when change frequency is low. |
-| `metadata` | `jsonb` only for additive provider/device metadata; never hide core accounting fields in JSON. |
+| Field                      | Rule                                                                                           |
+| -------------------------- | ---------------------------------------------------------------------------------------------- |
+| `id`                       | UUID primary key.                                                                              |
+| `company_id`               | UUID, mandatory on tenant data.                                                                |
+| `created_at`, `updated_at` | `timestamptz`, always UTC. Immutable tables omit `updated_at`.                                 |
+| `created_by_user_id`       | Nullable only for system/import activity; otherwise actor reference.                           |
+| `occurred_at`              | Business/event time; distinct from record creation time.                                       |
+| `currency_code`            | ISO 4217 uppercase char(3); company base currency is AED in UAE MVP.                           |
+| `amount`                   | `numeric(20,6)`, never floating point. Display/rounding follows currency/tax policy.           |
+| `quantity`                 | `numeric(20,6)`, never floating point.                                                         |
+| `status`                   | Constrained text/check or PostgreSQL enum only when change frequency is low.                   |
+| `metadata`                 | `jsonb` only for additive provider/device metadata; never hide core accounting fields in JSON. |
 
 ## Core relationship map
 

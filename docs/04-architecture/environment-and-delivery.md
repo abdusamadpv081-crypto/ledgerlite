@@ -2,13 +2,13 @@
 
 ## Environments
 
-| Environment | Purpose | Data policy |
-| --- | --- | --- |
-| Local | Developer workflow; Dockerized PostgreSQL/Redis. | Synthetic fixtures only. |
-| CI | Automated tests, lint/type/build, migration checks, E2E. | Ephemeral synthetic data. |
-| Development | Shared integration environment. | Synthetic or approved non-production test data. |
-| Staging | Production-like release verification. | Anonymized/synthetic data; no live merchant transactions. |
-| Production | Customer operations. | Encrypted customer data; controlled access/auditing/backups. |
+| Environment | Purpose                                                  | Data policy                                                  |
+| ----------- | -------------------------------------------------------- | ------------------------------------------------------------ |
+| Local       | Developer workflow; Dockerized PostgreSQL/Redis.         | Synthetic fixtures only.                                     |
+| CI          | Automated tests, lint/type/build, migration checks, E2E. | Ephemeral synthetic data.                                    |
+| Development | Shared integration environment.                          | Synthetic or approved non-production test data.              |
+| Staging     | Production-like release verification.                    | Anonymized/synthetic data; no live merchant transactions.    |
+| Production  | Customer operations.                                     | Encrypted customer data; controlled access/auditing/backups. |
 
 ## Delivery pipeline
 

@@ -13,46 +13,46 @@ Server-side authorization is authoritative. A POS device may cache only the capa
 
 ## Role templates
 
-| Capability group | Company owner | Accountant | Branch manager | Cashier |
-| --- | --- | --- | --- | --- |
-| View company/branch dashboard | Company | Company | Assigned branches | Own branch, operational only |
-| Manage company legal/VAT settings | Company | View only | — | — |
-| Manage branches | Company | View only | Assigned branches, operational fields only | — |
-| Invite/manage users and role templates | Company | — | Assigned branches, cashier roles only | — |
-| Manage POS operating policies | Company | View only | View only | — |
-| Manage POS devices | Company | — | Assigned branches | — |
-| Create/edit products and prices | Company | View only | Assigned branches, if granted | View/search only |
-| Receive/transfer stock | Company | View only | Assigned branches | — |
-| Adjust stock | Company | View only | Assigned branches, reason required | — |
-| Override stock availability | Company | — | Assigned branches, reason required | — |
-| Open/close own shift | — | — | Yes | Own shift |
-| View/review any branch shift | Company | View only | Assigned branches | Own shift only |
-| Make sale | — | — | Assigned branches | Assigned branch and active shift |
-| Apply standard discount | Configurable | — | Assigned branches | Only within policy limit |
-| Apply elevated discount | Company | — | Assigned branches, reason/approval | — |
-| Refund a sale | Company | — | Assigned branches, reason required | Only within policy/approval limit |
-| Approve cashier refund/stock override | Company | — | Assigned branches | — |
-| View accounting journals | Company | Company | Assigned branches, source detail only | — |
-| Post manual accounting adjustment | Company | Company, reason required | — | — |
-| Configure chart/tax/fiscal periods | Company | Company | — | — |
-| Close/reopen fiscal period | Company, approval required | Company, approval required | — | — |
-| View financial reports/VAT summary | Company | Company | Assigned branches, operational reports only | — |
-| View audit log | Company | Accounting/configuration scope | Assigned branch scope | Own-shift events only |
+| Capability group                       | Company owner              | Accountant                     | Branch manager                              | Cashier                           |
+| -------------------------------------- | -------------------------- | ------------------------------ | ------------------------------------------- | --------------------------------- |
+| View company/branch dashboard          | Company                    | Company                        | Assigned branches                           | Own branch, operational only      |
+| Manage company legal/VAT settings      | Company                    | View only                      | —                                           | —                                 |
+| Manage branches                        | Company                    | View only                      | Assigned branches, operational fields only  | —                                 |
+| Invite/manage users and role templates | Company                    | —                              | Assigned branches, cashier roles only       | —                                 |
+| Manage POS operating policies          | Company                    | View only                      | View only                                   | —                                 |
+| Manage POS devices                     | Company                    | —                              | Assigned branches                           | —                                 |
+| Create/edit products and prices        | Company                    | View only                      | Assigned branches, if granted               | View/search only                  |
+| Receive/transfer stock                 | Company                    | View only                      | Assigned branches                           | —                                 |
+| Adjust stock                           | Company                    | View only                      | Assigned branches, reason required          | —                                 |
+| Override stock availability            | Company                    | —                              | Assigned branches, reason required          | —                                 |
+| Open/close own shift                   | —                          | —                              | Yes                                         | Own shift                         |
+| View/review any branch shift           | Company                    | View only                      | Assigned branches                           | Own shift only                    |
+| Make sale                              | —                          | —                              | Assigned branches                           | Assigned branch and active shift  |
+| Apply standard discount                | Configurable               | —                              | Assigned branches                           | Only within policy limit          |
+| Apply elevated discount                | Company                    | —                              | Assigned branches, reason/approval          | —                                 |
+| Refund a sale                          | Company                    | —                              | Assigned branches, reason required          | Only within policy/approval limit |
+| Approve cashier refund/stock override  | Company                    | —                              | Assigned branches                           | —                                 |
+| View accounting journals               | Company                    | Company                        | Assigned branches, source detail only       | —                                 |
+| Post manual accounting adjustment      | Company                    | Company, reason required       | —                                           | —                                 |
+| Configure chart/tax/fiscal periods     | Company                    | Company                        | —                                           | —                                 |
+| Close/reopen fiscal period             | Company, approval required | Company, approval required     | —                                           | —                                 |
+| View financial reports/VAT summary     | Company                    | Company                        | Assigned branches, operational reports only | —                                 |
+| View audit log                         | Company                    | Accounting/configuration scope | Assigned branch scope                       | Own-shift events only             |
 
 `—` means the template has no capability by default. “Configurable” means the capability is granted through policy rather than automatically.
 
 ## High-risk action requirements
 
-| Action | Minimum authority | Additional controls |
-| --- | --- | --- |
-| Discount beyond cashier limit | Branch manager | Policy limit, reason, audit event. |
-| Refund | Cashier within policy; otherwise branch manager | Original-sale reference where available, reason, audit event. |
-| Offline refund | Branch manager approval by default | Locally verifiable approval, amount limit, post-sync review. |
-| Negative-stock override | Branch manager | Mandatory reason and exception queue. |
-| Stock adjustment | Branch manager | Adjustment reason, quantity/value, audit event. |
-| Manual journal | Accountant or owner | Balanced entry, source/reference, review policy. |
-| Period close/reopen | Accountant or owner | Close validation, elevated confirmation, audit event. |
-| Change POS policy/tax/company details | Owner | Online only, versioned, audit event. |
+| Action                                | Minimum authority                               | Additional controls                                           |
+| ------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------- |
+| Discount beyond cashier limit         | Branch manager                                  | Policy limit, reason, audit event.                            |
+| Refund                                | Cashier within policy; otherwise branch manager | Original-sale reference where available, reason, audit event. |
+| Offline refund                        | Branch manager approval by default              | Locally verifiable approval, amount limit, post-sync review.  |
+| Negative-stock override               | Branch manager                                  | Mandatory reason and exception queue.                         |
+| Stock adjustment                      | Branch manager                                  | Adjustment reason, quantity/value, audit event.               |
+| Manual journal                        | Accountant or owner                             | Balanced entry, source/reference, review policy.              |
+| Period close/reopen                   | Accountant or owner                             | Close validation, elevated confirmation, audit event.         |
+| Change POS policy/tax/company details | Owner                                           | Online only, versioned, audit event.                          |
 
 ## Permission evaluation rules
 

@@ -48,14 +48,14 @@ Recurring monthly SaaS subscription priced by company and number of branches. De
 
 ## 7. Functional requirements
 
-| ID | Requirement |
-| --- | --- |
-| FR-01 | The platform shall isolate each company’s data and scope users by permission and branch. |
+| ID    | Requirement                                                                                       |
+| ----- | ------------------------------------------------------------------------------------------------- |
+| FR-01 | The platform shall isolate each company’s data and scope users by permission and branch.          |
 | FR-02 | The platform shall retain an immutable, balanced double-entry ledger for posted financial events. |
-| FR-03 | A cashier shall be able to complete a sale and issue a receipt without internet connectivity. |
-| FR-04 | The platform shall synchronize offline transactions without duplicate posting. |
-| FR-05 | The platform shall record product stock movements by branch. |
-| FR-06 | The platform shall create tax-aware invoices, refunds, and financial reports for UAE operations. |
+| FR-03 | A cashier shall be able to complete a sale and issue a receipt without internet connectivity.     |
+| FR-04 | The platform shall synchronize offline transactions without duplicate posting.                    |
+| FR-05 | The platform shall record product stock movements by branch.                                      |
+| FR-06 | The platform shall create tax-aware invoices, refunds, and financial reports for UAE operations.  |
 | FR-07 | The platform shall record a complete audit log for important financial and configuration actions. |
 
 ## 8. Non-functional requirements
@@ -69,12 +69,12 @@ Recurring monthly SaaS subscription priced by company and number of branches. De
 
 ## 9. Assumptions and risks
 
-| Item | Type | Treatment |
-| --- | --- | --- |
-| UAE VAT and e-invoicing rules evolve | Risk | Keep UAE compliance in a configurable country pack and review official guidance regularly. |
-| Offline devices may send duplicate or conflicting events | Risk | Require immutable event IDs, idempotent server processing, and explicit conflict states. |
-| Retail workflows vary widely | Risk | Keep v1 limited to general retail and validate workflows with prospective users. |
-| Users may share devices | Assumption | Provide device registration, cashier sign-in/out, and clear shift ownership. |
+| Item                                                     | Type       | Treatment                                                                                  |
+| -------------------------------------------------------- | ---------- | ------------------------------------------------------------------------------------------ |
+| UAE VAT and e-invoicing rules evolve                     | Risk       | Keep UAE compliance in a configurable country pack and review official guidance regularly. |
+| Offline devices may send duplicate or conflicting events | Risk       | Require immutable event IDs, idempotent server processing, and explicit conflict states.   |
+| Retail workflows vary widely                             | Risk       | Keep v1 limited to general retail and validate workflows with prospective users.           |
+| Users may share devices                                  | Assumption | Provide device registration, cashier sign-in/out, and clear shift ownership.               |
 
 ## 10. Success measures
 

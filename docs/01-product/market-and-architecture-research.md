@@ -43,15 +43,15 @@ Shopify positions multi-location inventory synchronization, staff PINs, and phys
 
 ## Patterns Ledger Lite will adopt
 
-| Pattern | Ledger Lite implementation direction |
-| --- | --- |
-| Local operational data | IndexedDB/Dexie cache for registered device, permitted catalogue/prices, policies, shift, and immutable outbox. |
-| Local-first event creation | Device creates a durable event with ID and policy version before receipt completion. |
-| Server authority | Cloud validates, deduplicates, posts ledger/inventory atomically, and acknowledges; cloud reports exclude unacknowledged events by default. |
-| Explicit state | Distinguish network state, sync state, sale state, and payment state. |
-| Offline reduction | Permit only safe/high-value offline functions in MVP; display unavailable functionality clearly. |
-| Controlled policy | Offline windows, negative-stock handling, refunds, limits, and device permissions are versioned/audited configuration. |
-| Exception operations | Sync centre records rejection reason, event ID, owner, resolution, and linked corrective event. |
+| Pattern                    | Ledger Lite implementation direction                                                                                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| Local operational data     | IndexedDB/Dexie cache for registered device, permitted catalogue/prices, policies, shift, and immutable outbox.                             |
+| Local-first event creation | Device creates a durable event with ID and policy version before receipt completion.                                                        |
+| Server authority           | Cloud validates, deduplicates, posts ledger/inventory atomically, and acknowledges; cloud reports exclude unacknowledged events by default. |
+| Explicit state             | Distinguish network state, sync state, sale state, and payment state.                                                                       |
+| Offline reduction          | Permit only safe/high-value offline functions in MVP; display unavailable functionality clearly.                                            |
+| Controlled policy          | Offline windows, negative-stock handling, refunds, limits, and device permissions are versioned/audited configuration.                      |
+| Exception operations       | Sync centre records rejection reason, event ID, owner, resolution, and linked corrective event.                                             |
 
 ## Patterns we will avoid in MVP
 

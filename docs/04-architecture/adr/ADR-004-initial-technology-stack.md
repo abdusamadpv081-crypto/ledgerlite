@@ -12,21 +12,21 @@ Ledger Lite needs a browser-based, multi-tenant accounting and POS SaaS. It must
 
 Adopt a TypeScript-first modular-monolith stack for the initial product.
 
-| Concern | Choice | Role |
-| --- | --- | --- |
-| Package management/monorepo | pnpm workspaces + Turborepo | Fast, shared multi-application repository. |
-| Web/POS | Next.js App Router + React + TypeScript | Browser application, back-office, POS PWA shell. |
-| Styling/UI | Tailwind CSS + shadcn/ui + Radix UI + Ledger Lite `packages/ui` | Accessible primitives and owned design-system components. |
-| Client/server data | TanStack Query | Online server-state fetching/invalidation; not the POS ledger/outbox. |
-| POS local data | Dexie over IndexedDB | Local catalogue/policy cache and durable event outbox; see ADR-003. |
-| Forms/contracts | React Hook Form + Zod | Client validation and shared request/domain schemas. |
-| API | NestJS on Fastify + REST/OpenAPI | Modular server application and typed public/internal API contract. |
-| Database | PostgreSQL + Drizzle ORM / SQL migrations | Authoritative relational data, constraints, transactions, reporting. |
-| Background work | Redis + BullMQ | Retries, scheduled reports, notifications, exports, integration work. |
-| Object files | S3-compatible storage | Receipts, generated exports, attachment storage. |
-| Observability | Pino structured logs + OpenTelemetry + Sentry | Diagnostics, tracing, and actionable error monitoring. |
-| Testing | Vitest + Playwright + Testcontainers | Unit/domain, browser E2E, and database integration confidence. |
-| Delivery | Docker + GitHub Actions + Terraform/OpenTofu | Repeatable environments and controlled deployments. |
+| Concern                     | Choice                                                          | Role                                                                  |
+| --------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------------- |
+| Package management/monorepo | pnpm workspaces + Turborepo                                     | Fast, shared multi-application repository.                            |
+| Web/POS                     | Next.js App Router + React + TypeScript                         | Browser application, back-office, POS PWA shell.                      |
+| Styling/UI                  | Tailwind CSS + shadcn/ui + Radix UI + Ledger Lite `packages/ui` | Accessible primitives and owned design-system components.             |
+| Client/server data          | TanStack Query                                                  | Online server-state fetching/invalidation; not the POS ledger/outbox. |
+| POS local data              | Dexie over IndexedDB                                            | Local catalogue/policy cache and durable event outbox; see ADR-003.   |
+| Forms/contracts             | React Hook Form + Zod                                           | Client validation and shared request/domain schemas.                  |
+| API                         | NestJS on Fastify + REST/OpenAPI                                | Modular server application and typed public/internal API contract.    |
+| Database                    | PostgreSQL + Drizzle ORM / SQL migrations                       | Authoritative relational data, constraints, transactions, reporting.  |
+| Background work             | Redis + BullMQ                                                  | Retries, scheduled reports, notifications, exports, integration work. |
+| Object files                | S3-compatible storage                                           | Receipts, generated exports, attachment storage.                      |
+| Observability               | Pino structured logs + OpenTelemetry + Sentry                   | Diagnostics, tracing, and actionable error monitoring.                |
+| Testing                     | Vitest + Playwright + Testcontainers                            | Unit/domain, browser E2E, and database integration confidence.        |
+| Delivery                    | Docker + GitHub Actions + Terraform/OpenTofu                    | Repeatable environments and controlled deployments.                   |
 
 ## Architectural principles
 

@@ -27,14 +27,14 @@ ledgerlite/
 
 ## Package ownership rules
 
-| Package | May contain | Must not contain |
-| --- | --- | --- |
-| `packages/domain` | Value objects, Zod schemas, event contracts, pure calculation/posting rules. | React, NestJS, database drivers, HTTP calls. |
-| `packages/ui` | Tokens, shared styles, accessible primitives, Ledger Lite UI components. | Feature-specific API calls or accounting decisions. |
-| `packages/api-client` | Generated API types/client and thin client helpers. | Business rules or server secrets. |
-| `apps/web` | Routes, feature UI, POS sync worker, browser adapters. | Direct database access. |
-| `apps/api` | HTTP controllers, authorization, use cases, persistence adapters. | UI imports and browser storage code. |
-| `apps/worker` | Queue processors/scheduled tasks that invoke application use cases. | Independent duplicate business logic. |
+| Package               | May contain                                                                  | Must not contain                                    |
+| --------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------- |
+| `packages/domain`     | Value objects, Zod schemas, event contracts, pure calculation/posting rules. | React, NestJS, database drivers, HTTP calls.        |
+| `packages/ui`         | Tokens, shared styles, accessible primitives, Ledger Lite UI components.     | Feature-specific API calls or accounting decisions. |
+| `packages/api-client` | Generated API types/client and thin client helpers.                          | Business rules or server secrets.                   |
+| `apps/web`            | Routes, feature UI, POS sync worker, browser adapters.                       | Direct database access.                             |
+| `apps/api`            | HTTP controllers, authorization, use cases, persistence adapters.            | UI imports and browser storage code.                |
+| `apps/worker`         | Queue processors/scheduled tasks that invoke application use cases.          | Independent duplicate business logic.               |
 
 ## Backend module boundaries
 

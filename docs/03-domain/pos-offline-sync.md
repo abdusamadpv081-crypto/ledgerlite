@@ -31,14 +31,14 @@ The server stores an accepted event ID and returns its prior outcome for repeate
 
 ## 4. Lifecycle states
 
-| State | Meaning | Cashier-visible treatment |
-| --- | --- | --- |
-| Draft | Cart/change not yet committed. | Editable; not a sale. |
+| State        | Meaning                                                           | Cashier-visible treatment                                                    |
+| ------------ | ----------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Draft        | Cart/change not yet committed.                                    | Editable; not a sale.                                                        |
 | Pending sync | Event is durably stored on the device but not cloud-acknowledged. | Receipt may be issued; clearly show offline/pending state where appropriate. |
-| Syncing | Device is attempting delivery. | Do not permit duplicate manual resend. |
-| Synced | Server accepted the event and completed authoritative effects. | Finalized. |
-| Rejected | Server refused the event with a machine-readable reason. | Needs manager/support attention; never silently disappear. |
-| Superseded | A documented correction/reversal supersedes the pending event. | Preserve both events and their linkage. |
+| Syncing      | Device is attempting delivery.                                    | Do not permit duplicate manual resend.                                       |
+| Synced       | Server accepted the event and completed authoritative effects.    | Finalized.                                                                   |
+| Rejected     | Server refused the event with a machine-readable reason.          | Needs manager/support attention; never silently disappear.                   |
+| Superseded   | A documented correction/reversal supersedes the pending event.    | Preserve both events and their linkage.                                      |
 
 ## 5. Sync sequence
 
@@ -51,15 +51,15 @@ The server stores an accepted event ID and returns its prior outcome for repeate
 
 ## 6. Conflict and rejection policy
 
-| Situation | Rule |
-| --- | --- |
-| Duplicate transmission | Return the original result; no duplicate accounting/inventory effects. |
-| Product price changed after offline sale | Preserve the price presented and accepted on the device; audit the historical price version. |
-| Product disabled after offline sale | Accept the previously permitted offline sale if its local policy/catalogue version was valid; flag only if policy requires review. |
-| Cashier permission revoked while offline | Do not silently rewrite history. Server evaluates the configured offline-grace policy; reject/flag events beyond that policy. |
+| Situation                                            | Rule                                                                                                                                                            |
+| ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Duplicate transmission                               | Return the original result; no duplicate accounting/inventory effects.                                                                                          |
+| Product price changed after offline sale             | Preserve the price presented and accepted on the device; audit the historical price version.                                                                    |
+| Product disabled after offline sale                  | Accept the previously permitted offline sale if its local policy/catalogue version was valid; flag only if policy requires review.                              |
+| Cashier permission revoked while offline             | Do not silently rewrite history. Server evaluates the configured offline-grace policy; reject/flag events beyond that policy.                                   |
 | Insufficient stock due to another branch/device sale | Do not alter a completed customer sale automatically. Accept sale with a stock exception or apply configured negative-stock policy; require manager resolution. |
-| Shift already closed/server state mismatch | Reject as a resolvable exception; preserve local event and show actionable reason. |
-| Malformed/obsolete payload | Reject with a compatible client-update or support path; retain event for evidence. |
+| Shift already closed/server state mismatch           | Reject as a resolvable exception; preserve local event and show actionable reason.                                                                              |
+| Malformed/obsolete payload                           | Reject with a compatible client-update or support path; retain event for evidence.                                                                              |
 
 ## 7. UX and operational rules
 

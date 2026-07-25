@@ -12,5 +12,7 @@
     "bullmq": "^5.0.0",
     "ioredis": "^5.0.0"
   },
-  "devDependencies": { "tsx": "^4.0.0" }
+  "devDependencies": {
+    "tsx": "^4.0.0"
+  }
 }
