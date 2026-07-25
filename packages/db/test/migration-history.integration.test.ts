@@ -32,6 +32,7 @@ describe("database migration ledger", () => {
       "000009_require_branch_role_scopes.sql",
       "000010_browser_sessions.sql",
       "000011_oidc_login_transactions.sql",
+      "000012_operator_company_provisioning.sql",
     ]);
     expect(
       result.rows.every((row) => /^[a-f0-9]{64}$/.test(row.checksum)),
