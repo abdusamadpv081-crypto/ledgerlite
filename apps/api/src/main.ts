@@ -13,6 +13,7 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter(),
   );
+  await app.enableCors({ origin: "http://localhost:3000" });
   app.setGlobalPrefix("api/v1");
 
   const openApi = new DocumentBuilder()
