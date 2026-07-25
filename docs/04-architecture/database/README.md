@@ -6,3 +6,13 @@
 - [Operations and recovery](operations-and-recovery.md)
 
 The first executable migration is [`db/migrations/000001_base_schemas.sql`](../../../db/migrations/000001_base_schemas.sql). Later migrations will add reviewed tables, constraints, RLS policies, triggers, functions, and views in small testable increments.
+
+Apply migrations through the runner, not by executing source files manually:
+
+```powershell
+corepack pnpm --filter @ledgerlite/db migrate
+```
+
+The runner uses a database advisory lock and records a SHA-256 checksum for
+every applied filename in `platform.schema_migration`. It rejects a changed
+already-applied migration.

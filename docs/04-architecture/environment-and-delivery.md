@@ -26,7 +26,10 @@ Pull request
 
 ## Migration rules
 
-- Database migrations are reviewed source files and run once per environment.
+- Database migrations are reviewed source files and run once per environment
+  through `corepack pnpm --filter @ledgerlite/db migrate`.
+- The runner serializes migration attempts with a PostgreSQL advisory lock and
+  records source-file SHA-256 checksums in `platform.schema_migration`.
 - Any migration affecting financial history, tenant boundaries, or large data volume needs a rollback/recovery plan and tested staging run.
 - Dexie schema migrations are versioned, tested against previous local schema data, and must never silently discard unsynced outbox events.
 

@@ -22,10 +22,17 @@
 
 1. Write an additive, reviewed SQL migration with a rollback/recovery note.
 2. Test it against an empty database and a copy at the immediately previous migration version.
-3. Run static checks and integration tests in CI.
-4. Apply to development, then staging; verify migration version, health, and critical report/query checks.
-5. Promote the immutable release artifact and migration to production during approved deployment.
-6. Never edit an applied migration; write a new corrective migration.
+3. Run `corepack pnpm --filter @ledgerlite/db migrate` with the migration-role `DATABASE_URL`; it acquires a database advisory lock, records a SHA-256 checksum in `platform.schema_migration`, and rejects changed applied files.
+4. Run static checks and integration tests in CI.
+5. Apply to development, then staging; verify migration version, health, and critical report/query checks.
+6. Promote the immutable release artifact and migration to production during approved deployment.
+7. Never edit an applied migration; write a new corrective migration.
+
+`migrate:baseline` is a one-time adoption command for a verified environment
+that applied the exact reviewed migrations before the migration ledger existed.
+It records checksums only after confirming the expected Ledger Lite schema is
+present. It is not a recovery tool and must not be used to bypass an unknown or
+failed production migration.
 
 ## Performance and maintenance
 
