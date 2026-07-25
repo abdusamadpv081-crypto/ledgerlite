@@ -9,14 +9,16 @@
   "scripts": {
     "generate": "drizzle-kit generate",
     "migrate": "drizzle-kit migrate",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "drizzle-orm": "^0.44.0",
     "pg": "^8.0.0"
   },
   "devDependencies": {
+    "@types/pg": "^8.0.0",
     "drizzle-kit": "^0.31.0",
-    "@types/pg": "^8.0.0"
+    "vitest": "3.0.0"
   }
 }
