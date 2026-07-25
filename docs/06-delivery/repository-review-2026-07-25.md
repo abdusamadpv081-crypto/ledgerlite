@@ -44,15 +44,15 @@ from a client-supplied company ID.
 
 ## Remaining findings and delivery order
 
-| Priority | Required action                                                                                                                                   | Exit evidence                                                                   |
-| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
-| P0       | Implement OIDC adapter, server session, current actor/company context, and capability/scope guard before exposing a business API.                 | API tests deny unauthenticated and cross-company requests.                      |
-| P0       | Implement the financial trust path: shifts, Dexie outbox, sync idempotency, inventory/journal transaction, and drill-down.                        | First-vertical-slice acceptance criteria and network replay demonstration pass. |
-| P1       | Add an automated previous-version upgrade test.                                                                                                   | CI validates both empty and upgrade database paths.                             |
-| P1       | Add API integration, web component, and Playwright trust-path tests with the related stories.                                                     | CI executes each test layer.                                                    |
-| P1       | Replace the developer catalogue harness with design-system components, price/branch controls, accessibility/RTL checks, and browser E2E evidence. | US-020 acceptance review passes.                                                |
-| P1       | Configure GitHub required checks, push protection, and branch protection.                                                                         | Required security and quality checks are enforced on pull requests.             |
-| P2       | Add typed Drizzle schema/API client/UI package exports only with their first production consumers.                                                | Typed contract checks pass.                                                     |
+| Priority | Required action                                                                                                                                                 | Exit evidence                                                                   |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| P0       | Apply the implemented OIDC/session/current-actor/capability-guard foundation to the first production business API; do not expose a business command without it. | API tests deny unauthenticated, malformed-scope, and cross-company requests.    |
+| P0       | Implement the financial trust path: shifts, Dexie outbox, sync idempotency, inventory/journal transaction, and drill-down.                                      | First-vertical-slice acceptance criteria and network replay demonstration pass. |
+| P1       | Add an automated previous-version upgrade test.                                                                                                                 | CI validates both empty and upgrade database paths.                             |
+| P1       | Add API integration, web component, and Playwright trust-path tests with the related stories.                                                                   | CI executes each test layer.                                                    |
+| P1       | Replace the developer catalogue harness with design-system components, price/branch controls, accessibility/RTL checks, and browser E2E evidence.               | US-020 acceptance review passes.                                                |
+| P1       | Configure GitHub required checks, push protection, and branch protection.                                                                                       | Required security and quality checks are enforced on pull requests.             |
+| P2       | Add typed Drizzle schema/API client/UI package exports only with their first production consumers.                                                              | Typed contract checks pass.                                                     |
 
 ## Review rules
 

@@ -43,6 +43,7 @@ These rules follow OWASP’s guidance to use secure HttpOnly cookies and to avoi
 - The API exposes `/api/v1/auth/login`, `/api/v1/auth/callback`, and `/api/v1/auth/logout`. Callback cookies are named `__Host-ll_session` and set with `Secure`, `HttpOnly`, `SameSite=Strict`, and `Path=/`, with no `Domain` attribute.
 - Successful OIDC authentication only creates a session for an existing active `platform.app_user`; it never self-provisions an arbitrary identity. The future access-management/onboarding workflow is responsible for provisioning staff.
 - The API accepts no partial OIDC configuration. All `OIDC_*` values must be set together; an HTTP issuer is accepted only when `NODE_ENV=development`, while browser authentication still needs HTTPS for the `__Host-` cookie.
+- Production business controllers must use `SessionAuthenticationGuard`, then `ScopedCapabilityGuard` with `@RequireCapability(...)`. The capability guard accepts company scope only from the `:companyId` route parameter and optional branch scope only from `:branchId`; it never derives tenant scope from request bodies or query strings.
 
 ## POS device registration
 
