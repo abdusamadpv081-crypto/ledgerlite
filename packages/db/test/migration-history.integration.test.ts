@@ -30,6 +30,7 @@ describe("database migration ledger", () => {
       "000007_maintain_updated_at.sql",
       "000008_allow_multiple_unassigned_skus.sql",
       "000009_require_branch_role_scopes.sql",
+      "000010_browser_sessions.sql",
     ]);
     expect(
       result.rows.every((row) => /^[a-f0-9]{64}$/.test(row.checksum)),
