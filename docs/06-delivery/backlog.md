@@ -25,9 +25,15 @@
 - [x] Establish accounting/offline invariants.
 - [x] Establish design-system principles and accessibility/RTL standards.
 
-## Day 2 — proposed
+## Day 2 — completed discovery deliverables
 
-- [ ] Review and approve BRD v0.1; resolve open decisions.
-- [ ] Define personas and their end-to-end workflows: owner, accountant, manager, cashier.
-- [ ] Expand E04 into an offline POS state and sync/conflict specification.
-- [ ] Produce the first UX information architecture and screen inventory.
+- [x] Define personas and their end-to-end workflows: owner, accountant, manager, cashier.
+- [x] Expand E04 into an offline POS state and sync/conflict specification.
+- [x] Produce the first UX information architecture and screen inventory.
+
+## Day 3 — proposed
+
+- [ ] Review BRD open decisions and validate with at least one prospective retailer/accountant.
+- [ ] Decide offline policy: session/offline duration, refund approval, negative-stock behavior, and hardware/browser support.
+- [ ] Define permission capabilities and role templates.
+- [ ] Produce the first accounting data model: accounts, journals, journal entries, tax, fiscal periods, and source-event links.
