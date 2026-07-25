@@ -1,0 +1,40 @@
+name: Research or decision
+description: Capture a bounded question, evidence, and a decision needed before implementation.
+title: "research: "
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Decision or question
+      description: State the decision required and the deadline or dependent work.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and constraints
+      description: Link the affected product/domain/architecture documents.
+    validations:
+      required: true
+  - type: textarea
+    id: options
+    attributes:
+      label: Options and evaluation criteria
+      description: Include security, offline, accounting, UAE, cost, and operational criteria where relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence to collect
+      description: Name authoritative sources, prototypes, interviews, or tests required.
+    validations:
+      required: true
+  - type: checkboxes
+    id: outcome
+    attributes:
+      label: Expected outcome
+      options:
+        - label: The result requires an ADR before implementation.
+        - label: The result updates a user story, workflow, or pilot assumption.
+        - label: The result blocks another issue and must be linked as a dependency.

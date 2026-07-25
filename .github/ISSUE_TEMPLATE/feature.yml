@@ -1,0 +1,55 @@
+name: Feature or delivery task
+description: Define a small, testable product or engineering change.
+title: "feat: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        One issue should describe one independently demonstrable outcome. Split large work before it begins.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: User outcome
+      description: Who needs what capability, and why?
+      placeholder: As a cashier, I need ... so that ...
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Write observable, testable outcomes.
+      placeholder: |
+        - Given ... when ... then ...
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and boundaries
+      description: State what is included and explicitly excluded.
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Link user stories, designs, ADRs, database documents, or related issues.
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: Impact assessment
+      options:
+        - label: This change affects tenant isolation, authorization, or authentication.
+        - label: This change affects accounting, inventory, or other financial history.
+        - label: This change affects offline POS data or synchronization.
+        - label: This change requires a database migration.
+        - label: This change affects customer-visible UI, API, or operational documentation.
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification approach
+      description: Name the unit, integration, E2E, manual, migration, or security checks required.
+    validations:
+      required: true
