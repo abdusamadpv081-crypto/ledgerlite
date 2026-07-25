@@ -50,6 +50,7 @@
 
 - [x] Decide configurable inventory valuation approach and document perpetual weighted-average and periodic stock posting rules.
 - [x] Research public POS/accounting implementation patterns and record MVP implications.
+- [x] Select Dexie/IndexedDB for browser-local POS storage and custom financial-event synchronization.
 - [ ] Review checkout wireframes with a cashier/retailer and journals wireframe with an accountant.
 - [ ] Convert approved wireframes into a detailed screen-by-screen user-flow specification.
 - [ ] Choose the implementation stack and monorepo structure, then record architecture decisions.

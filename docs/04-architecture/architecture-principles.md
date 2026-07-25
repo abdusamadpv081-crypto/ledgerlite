@@ -15,7 +15,7 @@ Start as a modular monolith: one deployable backend separated into strict busine
 
 ## Offline-first POS contract
 
-The POS browser application retains the operational data it needs locally and writes completed sales/refunds to a durable outbox. A background sync process submits events with idempotency keys. The server validates authorization, rules, and duplicate delivery; it then posts inventory and accounting effects atomically, or rejects the event with a resolvable reason.
+The POS browser application retains the operational data it needs locally in Dexie/IndexedDB and writes completed sales/refunds to a durable outbox. A background sync process submits events with idempotency keys. The server validates authorization, rules, and duplicate delivery; it then posts inventory and accounting effects atomically, or rejects the event with a resolvable reason. See [ADR-003](adr/ADR-003-dexie-for-browser-local-pos-storage.md).
 
 ## Security baseline
 
