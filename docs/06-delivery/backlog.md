@@ -59,11 +59,12 @@
 
 - [x] Define authentication/session model and offline cashier-PIN controls.
 - [x] Define device registration, data cache scope, and initial browser/OS direction.
-- [ ] Research UAE payment providers and select the MVP payment model: cash/manual only versus integrated online terminal.
+- [x] Research UAE payment providers/hardware and select cash plus external-card-terminal recording as the MVP payment model.
 - [ ] Prepare pilot-customer interview guide and validate core POS/accounting workflows.
 
 ## Engineering readiness milestone
 
 - [x] Establish first vertical-slice scope and acceptance criteria.
 - [x] Approve authentication/device-security decisions; production OIDC vendor remains a pilot-launch gate.
+- [x] Approve MVP payment/hardware boundary; payment-provider integration remains a later pilot gate.
 - [ ] Scaffold monorepo and CI, then implement the first vertical slice.

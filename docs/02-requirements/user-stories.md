@@ -42,6 +42,7 @@ Every story must have acceptance criteria, priority, and a link to its epic. Sto
 - **US-031 — Complete offline sale.** As a cashier, I want to scan/search products, take cash or card payment, and issue a receipt offline, so that customers can be served during an outage.
   - Given the device is offline and the cashier is signed in, when a valid sale is completed, then it is saved locally with a unique immutable event ID and shown as pending sync.
   - Then the receipt clearly identifies the sale and its synchronization status where required.
+- **US-035 — Record external terminal payment.** As a cashier, I want to record an independently approved external card-terminal payment against a sale, so that the sale and its payment-clearing accounting entry are traceable without Ledger Lite handling card data.
 - **US-032 — Synchronize sale.** As the system, I want to upload a pending sale exactly once when online, so that accounting and inventory are updated without duplicates.
 - **US-033 — Refund sale.** As an authorized cashier, I want to refund a completed sale with a reason, so that customer corrections are auditable.
 - **US-034 — Close shift.** As a cashier, I want to count and close my shift, so that expected versus actual cash differences are visible.
