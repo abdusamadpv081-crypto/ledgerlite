@@ -8,7 +8,8 @@
   },
   "scripts": {
     "generate": "drizzle-kit generate",
-    "migrate": "drizzle-kit migrate",
+    "migrate": "node scripts/migrate.mjs",
+    "migrate:baseline": "node scripts/migrate.mjs --baseline",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

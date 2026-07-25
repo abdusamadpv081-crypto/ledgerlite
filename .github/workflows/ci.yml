@@ -59,19 +59,8 @@ jobs:
 
       - name: Validate database migrations
         env:
-          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
-        run: |
-          for migration in db/migrations/*.sql; do
-            docker exec -i "$POSTGRES_CONTAINER" psql \
-              -v ON_ERROR_STOP=1 \
-              -U ledgerlite \
-              -d ledgerlite < "$migration"
-          done
-          docker exec "$POSTGRES_CONTAINER" psql \
-            -v ON_ERROR_STOP=1 \
-            -U ledgerlite \
-            -d ledgerlite \
-            -c "SELECT nspname FROM pg_namespace WHERE nspname = 'accounting';"
+          DATABASE_URL: postgresql://ledgerlite:ledgerlite@localhost:5432/ledgerlite
+        run: pnpm --filter @ledgerlite/db migrate
 
       - name: Test database tenant isolation
         env:
