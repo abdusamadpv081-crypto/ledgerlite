@@ -8,7 +8,7 @@
     "dev": "corepack pnpm -r --parallel --if-present run dev",
     "lint": "eslint .",
     "typecheck": "corepack pnpm -r --if-present run typecheck",
-    "test": "corepack pnpm --filter @ledgerlite/domain test && corepack pnpm --filter @ledgerlite/db test",
+    "test": "corepack pnpm --filter @ledgerlite/domain test && corepack pnpm --filter @ledgerlite/api test && corepack pnpm --filter @ledgerlite/db test",
     "format": "prettier --check .",
     "format:write": "prettier --write ."
   },
