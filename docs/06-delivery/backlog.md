@@ -53,11 +53,17 @@
 - [x] Select Dexie/IndexedDB for browser-local POS storage and custom financial-event synchronization.
 - [ ] Review checkout wireframes with a cashier/retailer and journals wireframe with an accountant.
 - [ ] Convert approved wireframes into a detailed screen-by-screen user-flow specification.
-- [ ] Choose the implementation stack and monorepo structure, then record architecture decisions.
+- [x] Choose the implementation stack and monorepo structure, then record architecture decisions.
 
 ## Day 6 — proposed
 
-- [ ] Decide authentication/session model and offline cashier-PIN controls.
+- [ ] Define authentication/session model and offline cashier-PIN controls.
 - [ ] Define device registration, data cache scope, supported browser/OS, and printer/scanner strategy.
 - [ ] Research UAE payment providers and select the MVP payment model: cash/manual only versus integrated online terminal.
 - [ ] Prepare pilot-customer interview guide and validate core POS/accounting workflows.
+
+## Engineering readiness milestone
+
+- [x] Establish first vertical-slice scope and acceptance criteria.
+- [ ] Approve authentication/device-security decisions.
+- [ ] Scaffold monorepo and CI, then implement the first vertical slice.
