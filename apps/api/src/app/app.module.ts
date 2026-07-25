@@ -6,6 +6,7 @@ import {
   AuthorizationService,
   createAuthorizationPool,
 } from "../auth/authorization.service.js";
+import { SessionService } from "../auth/session.service.js";
 
 @Module({
   controllers:
@@ -18,6 +19,7 @@ import {
       useFactory: createAuthorizationPool,
     },
     AuthorizationService,
+    SessionService,
   ],
 })
 export class AppModule {}
