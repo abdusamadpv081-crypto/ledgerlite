@@ -119,6 +119,23 @@ afterAll(async () => {
 });
 
 describe("catalogue and policy tenant isolation", () => {
+  it("forces row security on every tenant-owned catalogue table", async () => {
+    const result = await pool.query<{
+      relname: string;
+      relforcerowsecurity: boolean;
+    }>(
+      `SELECT relname, relforcerowsecurity
+       FROM pg_class
+       JOIN pg_namespace ON pg_namespace.oid = pg_class.relnamespace
+       WHERE (nspname = 'catalog' AND relname IN ('tax_code', 'product', 'product_barcode', 'product_branch', 'price_list', 'price_list_item'))
+          OR (nspname = 'platform' AND relname = 'policy_version')
+       ORDER BY relname`,
+    );
+
+    expect(result.rows).toHaveLength(7);
+    expect(result.rows.every((row) => row.relforcerowsecurity)).toBe(true);
+  });
+
   it("exposes only the current company's product, price, and policy read model", async () => {
     const visible = await asCompany(companyAId, async (client) => ({
       products: await client.query("SELECT id FROM catalog.product"),
