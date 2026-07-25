@@ -18,9 +18,13 @@ const taxSchema = z.object({
   name: z.string().trim().min(1).max(120),
   rate: z.number().min(0).max(1),
 });
+const optionalSkuSchema = z
+  .union([z.string().trim().min(1).max(80), z.literal("")])
+  .optional()
+  .transform((value) => value || undefined);
 const productSchema = z.object({
   companyId: companyIdSchema,
-  sku: z.string().trim().min(1).max(80).optional(),
+  sku: optionalSkuSchema,
   name: z.string().trim().min(1).max(240),
   taxCodeId: z.string().uuid().optional(),
 });
@@ -78,14 +82,17 @@ export class CatalogController {
   @Post("bootstrap")
   async bootstrap() {
     this.assertEnabled();
+    const demoCompanyName = "Ledger Lite Development Demo";
     const existing = await pool.query<{ id: string }>(
-      "SELECT id FROM platform.company ORDER BY created_at LIMIT 1",
+      "SELECT id FROM platform.company WHERE legal_name = $1 ORDER BY created_at LIMIT 1",
+      [demoCompanyName],
     );
     const companyId =
       existing.rows[0]?.id ??
       (
         await pool.query<{ id: string }>(
-          "INSERT INTO platform.company (legal_name) VALUES ('Ledger Lite Demo Retail') RETURNING id",
+          "INSERT INTO platform.company (legal_name) VALUES ($1) RETURNING id",
+          [demoCompanyName],
         )
       ).rows[0].id;
     const branch = await pool.query<{ id: string }>(
@@ -117,7 +124,12 @@ export class CatalogController {
          SELECT item.unit_price
          FROM catalog.price_list_item AS item
          JOIN catalog.price_list AS list ON list.id = item.price_list_id
-         WHERE item.product_id = product.id AND list.status = 'active'
+         WHERE item.product_id = product.id
+           AND list.status = 'active'
+           AND list.effective_from <= now()
+           AND (list.effective_until IS NULL OR list.effective_until > now())
+           AND item.effective_from <= now()
+           AND (item.effective_until IS NULL OR item.effective_until > now())
          ORDER BY item.effective_from DESC
          LIMIT 1
        ) AS price ON true
@@ -181,18 +193,26 @@ export class CatalogController {
     this.assertEnabled();
     const input = this.parse(priceSchema, body);
     return this.withCompany(input.companyId, async (client) => {
+      await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+        `${input.companyId}:Default retail`,
+      ]);
       const priceList = await client.query<{ id: string }>(
-        `INSERT INTO catalog.price_list (company_id, name)
-       VALUES ($1, 'Default retail')
-       ON CONFLICT (company_id, name, effective_from) DO NOTHING
-       RETURNING id`,
+        `SELECT id
+         FROM catalog.price_list
+         WHERE company_id = $1
+           AND name = 'Default retail'
+           AND status = 'active'
+           AND effective_from <= now()
+           AND (effective_until IS NULL OR effective_until > now())
+         ORDER BY effective_from DESC
+         LIMIT 1`,
         [input.companyId],
       );
       const priceListId =
         priceList.rows[0]?.id ??
         (
           await client.query<{ id: string }>(
-            "SELECT id FROM catalog.price_list WHERE company_id = $1 AND name = 'Default retail' ORDER BY effective_from DESC LIMIT 1",
+            "INSERT INTO catalog.price_list (company_id, name) VALUES ($1, 'Default retail') RETURNING id",
             [input.companyId],
           )
         ).rows[0].id;
