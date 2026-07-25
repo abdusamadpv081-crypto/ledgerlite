@@ -15,10 +15,10 @@ exists.
 
 ## E01 — SaaS foundation
 
-| Story                  | Status      | Evidence / remaining work                                                                                                                |
-| ---------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| US-001 Create company  | In progress | Tenant company table and RLS: `aa9934b`; audit foundation: `d451347`. Still needs authorized onboarding command/API and audit write.     |
-| US-002 Manage branches | In progress | Branch table, company-consistent device binding, and RLS: `aa9934b`. Still needs management command/API and UI.                          |
+| Story                  | Status      | Evidence / remaining work                                                                                                                                                                                                                                                                           |
+| ---------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-001 Create company  | In progress | Tenant company table and RLS: `aa9934b`; audit foundation: `d451347`. Still needs authorized onboarding command/API and audit write.                                                                                                                                                                |
+| US-002 Manage branches | In progress | Branch table, company-consistent device binding, and RLS: `aa9934b`. Still needs management command/API and UI.                                                                                                                                                                                     |
 | US-003 Manage access   | In progress | OIDC identity reference, membership, scoped roles, and tests: `d451347`; role-to-capability contract: `558463b`; RLS-backed capability evaluation with company/branch, disabled-user, and cross-company denial tests: `8edf9b9`. Still needs the OIDC session adapter and access-management API/UI. |
 
 ## E02 — Accounting core
