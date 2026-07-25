@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@ledgerlite/domain": "workspace:*",
-    "bullmq": "^5.0.0",
+    "bullmq": "^5.81.2",
     "ioredis": "^5.0.0"
   },
   "devDependencies": {
