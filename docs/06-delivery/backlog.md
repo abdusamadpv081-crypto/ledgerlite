@@ -36,5 +36,12 @@
 - [x] Decide policy architecture: company/branch configuration, safe defaults, and audit/versioning requirements.
 - [x] Decide recommended offline policy defaults: stock override, 72-hour operating window, and manager-approved offline refunds.
 - [ ] Review the policy defaults with at least one prospective retailer/accountant.
-- [ ] Define permission capabilities and role templates.
-- [ ] Produce the first accounting data model: accounts, journals, journal entries, tax, fiscal periods, and source-event links.
+- [x] Define permission capabilities, role templates, scopes, and high-risk action controls.
+- [x] Produce the first accounting data model: accounts, journals, journal entries, tax, fiscal periods, and source-event links.
+
+## Day 4 — proposed
+
+- [ ] Decide initial inventory costing/valuation approach and document stock posting rules.
+- [ ] Turn design-system principles into implementable foundations: token naming, typography scale, spacing, breakpoints, and semantic colours.
+- [ ] Specify core component contracts: button, input, money input, table, status, dialog, and POS cart.
+- [ ] Create the first low-fidelity POS checkout and accounting-list wireframes.
