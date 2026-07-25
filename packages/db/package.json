@@ -10,6 +10,7 @@
     "generate": "drizzle-kit generate",
     "migrate": "node scripts/migrate.mjs",
     "migrate:baseline": "node scripts/migrate.mjs --baseline",
+    "provision:pilot-owner": "node scripts/provision-pilot-owner.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
