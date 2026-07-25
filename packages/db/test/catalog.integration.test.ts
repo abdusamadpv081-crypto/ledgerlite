@@ -162,4 +162,22 @@ describe("catalogue and policy tenant isolation", () => {
       ),
     ).rejects.toThrow();
   });
+
+  it("maintains updated_at for a mutable catalogue record", async () => {
+    const before = await pool.query<{ updated_at: Date }>(
+      "SELECT updated_at FROM catalog.product WHERE id = $1",
+      [productAId],
+    );
+
+    const after = await asCompany(companyAId, (client) =>
+      client.query<{ updated_at: Date }>(
+        "UPDATE catalog.product SET name = 'Product A updated' WHERE id = $1 RETURNING updated_at",
+        [productAId],
+      ),
+    );
+
+    expect(after.rows[0].updated_at.getTime()).toBeGreaterThan(
+      before.rows[0].updated_at.getTime(),
+    );
+  });
 });
