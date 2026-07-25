@@ -45,6 +45,7 @@ export type OidcIdentity = Readonly<{
 }>;
 
 export interface OidcProvider {
+  callbackUrl(requestUrl: string): URL;
   isConfigured(): boolean;
   startAuthorization(): Promise<OidcAuthorizationRequest>;
   exchangeAuthorizationCode(
@@ -124,6 +125,18 @@ export class OpenIdConnectProvider implements OidcProvider {
 
   isConfigured(): boolean {
     return this.settings !== undefined;
+  }
+
+  callbackUrl(requestUrl: string): URL {
+    const request = new URL(requestUrl, "https://ledgerlite.invalid");
+    const callback = new URL(this.requiredSettings().redirectUri);
+    if (request.pathname !== callback.pathname) {
+      throw new Error(
+        "OIDC callback path does not match the configured redirect URI.",
+      );
+    }
+    callback.search = request.search;
+    return callback;
   }
 
   async startAuthorization(): Promise<OidcAuthorizationRequest> {

@@ -25,6 +25,10 @@ class FakeOidcProvider implements OidcProvider {
     return true;
   }
 
+  callbackUrl(requestUrl: string): URL {
+    return new URL(requestUrl, "https://app.ledgerlite.test");
+  }
+
   async startAuthorization(): Promise<OidcAuthorizationRequest> {
     this.requestNumber += 1;
     const suffix = String(this.requestNumber);
@@ -123,9 +127,7 @@ describe("OidcLoginService", () => {
     );
 
     const completed = await login.complete(
-      new URL(
-        "https://app.ledgerlite.test/api/v1/auth/callback?code=authorization-code&state=state-1",
-      ),
+      "/api/v1/auth/callback?code=authorization-code&state=state-1",
       "state-1",
     );
     expect(completed.returnTo).toBe(returnTo);
@@ -137,9 +139,7 @@ describe("OidcLoginService", () => {
 
     await expect(
       login.complete(
-        new URL(
-          "https://app.ledgerlite.test/api/v1/auth/callback?code=authorization-code&state=state-1",
-        ),
+        "/api/v1/auth/callback?code=authorization-code&state=state-1",
         "state-1",
       ),
     ).rejects.toBeInstanceOf(UnauthorizedException);
@@ -154,9 +154,7 @@ describe("OidcLoginService", () => {
     await login.start(returnTo);
     await expect(
       login.complete(
-        new URL(
-          "https://app.ledgerlite.test/api/v1/auth/callback?code=authorization-code&state=state-2",
-        ),
+        "/api/v1/auth/callback?code=authorization-code&state=state-2",
         "state-2",
       ),
     ).rejects.toBeInstanceOf(UnauthorizedException);

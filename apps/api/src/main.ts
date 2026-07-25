@@ -6,6 +6,7 @@ import {
   NestFastifyApplication,
 } from "@nestjs/platform-fastify";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
+import cookie from "@fastify/cookie";
 import { AppModule } from "./app/app.module.js";
 
 async function bootstrap() {
@@ -13,6 +14,7 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter(),
   );
+  await app.register(cookie);
   await app.enableCors({ origin: "http://localhost:3000" });
   app.setGlobalPrefix("api/v1");
 

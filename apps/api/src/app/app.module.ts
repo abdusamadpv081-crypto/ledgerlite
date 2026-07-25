@@ -17,12 +17,13 @@ import {
 } from "../auth/oidc-provider.js";
 import { OidcLoginService } from "../auth/oidc-login.service.js";
 import { OidcTransactionCipher } from "../auth/oidc-transaction-cipher.js";
+import { AuthController } from "../auth/auth.controller.js";
 
 @Module({
   controllers:
     process.env.LEDGERLITE_ENABLE_DEVELOPMENT_CATALOG === "true"
-      ? [AppController, CatalogController]
-      : [AppController],
+      ? [AppController, AuthController, CatalogController]
+      : [AppController, AuthController],
   providers: [
     {
       provide: AUTHORIZATION_POOL,

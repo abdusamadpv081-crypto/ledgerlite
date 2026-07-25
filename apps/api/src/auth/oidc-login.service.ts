@@ -88,7 +88,7 @@ export class OidcLoginService {
   }
 
   async complete(
-    callbackUrl: URL,
+    callbackRequestUrl: string,
     state: string | undefined,
   ): Promise<CompletedOidcLogin> {
     if (!state) {
@@ -98,7 +98,7 @@ export class OidcLoginService {
     const cipher = this.requiredCipher();
     const transaction = await this.consume(state);
     const identity = await this.provider.exchangeAuthorizationCode(
-      callbackUrl,
+      this.provider.callbackUrl(callbackRequestUrl),
       {
         nonce: cipher.decrypt(transaction.nonceCiphertext),
         pkceCodeVerifier: cipher.decrypt(
