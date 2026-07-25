@@ -241,11 +241,10 @@ export async function provisionPilotCompany({
       );
       await client.query(
         `INSERT INTO audit.event
-           (company_id, actor_user_id, action, entity_type, entity_id, metadata)
-         VALUES ($1, $2, 'company.provisioned', 'company', $1, $3::jsonb)`,
+           (company_id, action, entity_type, entity_id, metadata)
+         VALUES ($1, 'company.provisioned', 'company', $1, $2::jsonb)`,
         [
           companyId,
-          ownerUserId,
           JSON.stringify({
             provisioning_reference: input.externalReference,
             source: "assisted_pilot",
