@@ -3,6 +3,7 @@
 | Area | Purpose |
 | --- | --- |
 | [Product](01-product/BRD.md) | Vision, business requirements, scope, and success measures. |
+| [Market research](01-product/market-and-architecture-research.md) | Public POS/accounting benchmark findings and product implications. |
 | [Requirements](02-requirements/user-stories.md) | Epics, user stories, and acceptance criteria. |
 | [Domain](03-domain/accounting-rules.md) | Accounting and offline POS rules that cannot be violated. |
 | [Architecture](04-architecture/architecture-principles.md) | Technical constraints and decisions. |
