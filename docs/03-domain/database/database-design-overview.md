@@ -25,7 +25,7 @@ Database migrations create these schemas explicitly. Application database roles 
 - Composite foreign keys include `company_id` where a cross-tenant reference could otherwise be possible.
 - Application use cases set `app.current_company_id` inside every database transaction.
 - PostgreSQL row-level security is enabled for tenant-owned tables as defence in depth; privileged migration/reporting roles are separate from application roles.
-- Global identity and browser-session records intentionally have no `company_id`; an active server session resolves only an active `app_user`, and each business request separately proves company/branch capability before setting tenant context.
+- Global identity, browser-session, and OIDC login-transaction records intentionally have no `company_id`; an active server session resolves only an active `app_user`, and each business request separately proves company/branch capability before setting tenant context.
 - All primary and externally exposed IDs currently use database-generated random UUIDv4 values (`gen_random_uuid()`); serial IDs are not exposed. A future move to time-ordered UUIDv7 requires a reviewed compatibility migration.
 
 ## Common columns and types

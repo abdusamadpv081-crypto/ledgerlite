@@ -4,16 +4,17 @@ This is the release-one logical schema. Columns listed as `FK` must also preserv
 
 ## Platform
 
-| Table                      | Key fields                                                                            | Notes                                                            |
-| -------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `platform.company`         | `id`, legal name, trade name, TRN, base currency, timezone, fiscal-year start, status | Tenant/legal accounting boundary.                                |
-| `platform.branch`          | `id`, `company_id`, name, code, address, timezone, status                             | Operating location; branch code unique per company.              |
-| `platform.app_user`        | `id`, identity provider, external subject, display name, email, status                | OIDC identity link; no password/PIN secret stored here.          |
-| `platform.browser_session` | `user_id`, token digest, last seen, idle/absolute expiry, invalidation state          | Global server-side session; raw cookie token is never persisted. |
-| `platform.company_user`    | `company_id`, `user_id`, status, effective dates                                      | Tenant membership.                                               |
-| `platform.role_assignment` | membership FK, role template, branch scope, effective dates                           | Role template maps to capabilities.                              |
-| `platform.pos_device`      | `id`, company/branch FK, public key, status, last sync, app/schema/policy version     | Registered browser installation; unique public-key fingerprint.  |
-| `platform.policy_version`  | company/branch scope, policy JSON, effective time, version                            | Immutable configuration snapshot referenced by local events.     |
+| Table                             | Key fields                                                                             | Notes                                                              |
+| --------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `platform.company`                | `id`, legal name, trade name, TRN, base currency, timezone, fiscal-year start, status  | Tenant/legal accounting boundary.                                  |
+| `platform.branch`                 | `id`, `company_id`, name, code, address, timezone, status                              | Operating location; branch code unique per company.                |
+| `platform.app_user`               | `id`, identity provider, external subject, display name, email, status                 | OIDC identity link; no password/PIN secret stored here.            |
+| `platform.browser_session`        | `user_id`, token digest, last seen, idle/absolute expiry, invalidation state           | Global server-side session; raw cookie token is never persisted.   |
+| `platform.oidc_login_transaction` | state digest, encrypted PKCE verifier/nonce, safe return path, expiry/consumption time | Global one-time OIDC redirect state; raw state is never persisted. |
+| `platform.company_user`           | `company_id`, `user_id`, status, effective dates                                       | Tenant membership.                                                 |
+| `platform.role_assignment`        | membership FK, role template, branch scope, effective dates                            | Role template maps to capabilities.                                |
+| `platform.pos_device`             | `id`, company/branch FK, public key, status, last sync, app/schema/policy version      | Registered browser installation; unique public-key fingerprint.    |
+| `platform.policy_version`         | company/branch scope, policy JSON, effective time, version                             | Immutable configuration snapshot referenced by local events.       |
 
 ## Catalogue and tax
 
