@@ -31,7 +31,8 @@ Company
 | Business event | Immutable operational fact. | ID, event type, company/branch/device/cashier/shift IDs where applicable, occurred-at, source/version, status. |
 | Journal entry | Balanced accounting representation of a posted event/adjustment. | ID, company ID, journal date, posting date, period ID, source event ID, status, description. |
 | Journal line | Debit or credit against one account. | ID, journal entry ID, account ID, debit amount, credit amount, currency amounts, tax/source references. |
-| Stock movement | Immutable change of on-hand stock. | ID, product, branch/location, quantity delta, event ID, reason, occurred-at. |
+| Stock movement | Immutable change of on-hand stock. | ID, product, branch/location, quantity delta, event ID, reason, occurred-at, valuation-policy version. |
+| Inventory valuation record | Cost/value state and supporting cost movements. | Product, valuation scope, quantity/value before/after, unit cost, source movement, valuation-policy version. |
 | Cash shift | Cash accountability unit. | ID, branch/device/cashier, opening/closing times, opening float, expected cash, counted cash, variance, status. |
 | Audit event | Append-only record of important action. | actor, action, entity, before/after summary, timestamp, authorization/policy context. |
 
@@ -69,7 +70,7 @@ An account’s type and normal balance are set intentionally and cannot be chang
 | Retail sales revenue | — | Net-of-VAT sales total |
 | VAT payable | — | VAT total |
 
-If perpetual inventory costing is enabled and reliable cost is available, post a linked entry: debit Cost of goods sold; credit Inventory asset. The costing method is an explicit future decision; do not invent cost values when unavailable.
+For the `perpetual_weighted_average` policy, if reliable cost is available, post a linked entry: debit Cost of goods sold; credit Inventory asset. Under the `periodic` policy, do not post sale-time COGS/inventory reduction; the period-end valuation workflow creates the authorized adjustment. Never invent cost values when unavailable. See [ADR-002](../04-architecture/adr/ADR-002-configurable-inventory-valuation-policy.md).
 
 ### Sale paid by card
 
@@ -91,7 +92,7 @@ A refund is linked to its original sale and reverses its financial effect; it do
 | VAT payable | VAT refund total | — |
 | Cash on hand or payment clearing | — | Gross refund total |
 
-If goods are returned to sellable inventory and perpetual costing applies, debit Inventory asset and credit Cost of goods sold for the recorded return cost.
+If goods are returned to sellable inventory and `perpetual_weighted_average` applies, debit Inventory asset and credit Cost of goods sold for the recorded return cost. Under `periodic`, retain the quantity movement and resolve valuation through the period-end workflow.
 
 ### Cash shift variance
 
@@ -106,7 +107,7 @@ The variance journal must link to the shift count, cashier, branch, reason, and 
 
 ### Stock movement
 
-Every receipt, transfer, adjustment, and sale/refund produces a stock movement. Accounting effects depend on costing configuration and whether the movement has a reliable value. Quantity movement is never discarded merely because valuation is deferred.
+Every receipt, transfer, adjustment, and sale/refund produces a stock movement. Accounting effects depend on the effective company valuation policy and whether the movement has a reliable value. Quantity movement is never discarded merely because valuation is deferred.
 
 ## 7. State transitions
 
@@ -128,9 +129,12 @@ POS receipt / stock movement / shift
 
 This is mandatory for auditability, support, and accounting reconciliation.
 
-## 9. Decisions deferred beyond this blueprint
+## 9. Inventory valuation policy
 
-- Inventory costing method and valuation timing.
+Inventory valuation is configurable per company under [ADR-002](../04-architecture/adr/ADR-002-configurable-inventory-valuation-policy.md). Release one supports `perpetual_weighted_average` (default) and `periodic`. Policy is versioned/effective-dated and cannot be retroactively changed after postings.
+
+## 10. Decisions deferred beyond this blueprint
+
 - Payment-acquirer settlement/reconciliation workflow.
 - Multi-currency journal representation and exchange gain/loss rules.
 - Supplier purchases, accounts payable, and bank reconciliation.

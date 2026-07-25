@@ -48,7 +48,7 @@
 
 ## Day 5 — proposed
 
-- [ ] Decide initial inventory costing/valuation approach and document stock posting rules.
+- [x] Decide configurable inventory valuation approach and document perpetual weighted-average and periodic stock posting rules.
 - [ ] Review checkout wireframes with a cashier/retailer and journals wireframe with an accountant.
 - [ ] Convert approved wireframes into a detailed screen-by-screen user-flow specification.
 - [ ] Choose the implementation stack and monorepo structure, then record architecture decisions.
