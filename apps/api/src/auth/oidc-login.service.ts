@@ -41,6 +41,13 @@ function digestState(state: string): Buffer {
   return createHash("sha256").update(state).digest();
 }
 
+function containsControlCharacter(value: string): boolean {
+  return Array.from(value).some((character) => {
+    const codePoint = character.codePointAt(0);
+    return codePoint !== undefined && (codePoint <= 31 || codePoint === 127);
+  });
+}
+
 function normalizeReturnTo(returnTo: string | undefined): string {
   if (!returnTo) {
     return "/";
@@ -49,7 +56,8 @@ function normalizeReturnTo(returnTo: string | undefined): string {
     returnTo.length > RETURN_TO_MAXIMUM_LENGTH ||
     !returnTo.startsWith("/") ||
     returnTo.startsWith("//") ||
-    returnTo.includes("\\")
+    returnTo.includes("\\") ||
+    containsControlCharacter(returnTo)
   ) {
     throw new UnauthorizedException("The requested return path is not valid.");
   }

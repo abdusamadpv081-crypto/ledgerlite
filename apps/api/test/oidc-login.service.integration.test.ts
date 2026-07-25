@@ -149,6 +149,9 @@ describe("OidcLoginService", () => {
     await expect(login.start("//external.example")).rejects.toBeInstanceOf(
       UnauthorizedException,
     );
+    await expect(login.start("/pos\nredirect")).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
 
     provider.identity = { providerId, subject: "unknown-subject" };
     await login.start(returnTo);

@@ -22,6 +22,7 @@ const OIDC_ENVIRONMENT_KEYS = [
   "OIDC_REDIRECT_URI",
   "OIDC_TRANSACTION_ENCRYPTION_KEY",
 ] as const;
+const BASE64URL_32_BYTE_KEY_PATTERN = /^[A-Za-z0-9_-]{43}$/;
 
 export type OidcSettings = Readonly<{
   clientId: string;
@@ -100,12 +101,12 @@ export function loadOidcSettings(
     );
   }
 
-  const transactionEncryptionKey = Buffer.from(keyValue, "base64url");
-  if (transactionEncryptionKey.length !== 32) {
+  if (!BASE64URL_32_BYTE_KEY_PATTERN.test(keyValue)) {
     throw new Error(
       "OIDC_TRANSACTION_ENCRYPTION_KEY must be a base64url-encoded 32-byte key.",
     );
   }
+  const transactionEncryptionKey = Buffer.from(keyValue, "base64url");
 
   return {
     clientId,
