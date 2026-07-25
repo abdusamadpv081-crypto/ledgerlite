@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify application and database
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: ledgerlite
+          POSTGRES_USER: ledgerlite
+          POSTGRES_PASSWORD: ledgerlite
+        options: >-
+          --health-cmd "pg_isready -U ledgerlite -d ledgerlite"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check workspaces
+        run: pnpm -r --if-present run typecheck
+
+      - name: Build applications
+        run: |
+          pnpm --filter @ledgerlite/api build
+          pnpm --filter @ledgerlite/web build
+
+      - name: Validate database migrations
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          for migration in db/migrations/*.sql; do
+            docker exec -i "$POSTGRES_CONTAINER" psql \
+              -v ON_ERROR_STOP=1 \
+              -U ledgerlite \
+              -d ledgerlite < "$migration"
+          done
+          docker exec "$POSTGRES_CONTAINER" psql \
+            -v ON_ERROR_STOP=1 \
+            -U ledgerlite \
+            -d ledgerlite \
+            -c "SELECT nspname FROM pg_namespace WHERE nspname = 'accounting';"
