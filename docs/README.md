@@ -11,6 +11,7 @@
 | [Design system](05-design-system/design-system.md)                | Foundations and component rules for a consistent product UI.               |
 | [Delivery](06-delivery/backlog.md)                                | Prioritized MVP roadmap.                                                   |
 | [Project operating model](06-delivery/project-operating-model.md) | Source-of-truth rules, work-item lifecycle, quality gates, and milestones. |
+| [Story tracker](06-delivery/story-tracker.md)                     | MVP story status, completed enablers, acceptance evidence, and blockers.   |
 
 ## Working agreement
 

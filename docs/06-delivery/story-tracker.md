@@ -1,0 +1,57 @@
+# Story tracker
+
+## How to use this tracker
+
+This is the durable view of MVP story progress. GitHub Issues/Project is the
+live work queue; each issue must link back to the applicable story below.
+
+- **Planned:** not ready to implement.
+- **In progress:** one or more enabling slices are merged, but story acceptance
+  criteria are not yet fully demonstrable.
+- **Done:** all acceptance criteria have implementation and verification evidence.
+
+Do not mark a story done just because its schema or a single backend component
+exists.
+
+## E01 — SaaS foundation
+
+| Story                  | Status      | Evidence / remaining work                                                                                                                |
+| ---------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| US-001 Create company  | In progress | Tenant company table and RLS: `aa9934b`; audit foundation: `d451347`. Still needs authorized onboarding command/API and audit write.     |
+| US-002 Manage branches | In progress | Branch table, company-consistent device binding, and RLS: `aa9934b`. Still needs management command/API and UI.                          |
+| US-003 Manage access   | In progress | OIDC identity reference, membership, scoped roles, and tests: `d451347`. Still needs capability evaluation and access-management API/UI. |
+
+## E02 — Accounting core
+
+| Story                              | Status  | Evidence / blocker                                                |
+| ---------------------------------- | ------- | ----------------------------------------------------------------- |
+| US-010 Configure chart of accounts | Planned | Requires chart/account model and UAE starter chart.               |
+| US-011 Post a journal              | Planned | Requires journals, lines, invariant functions, and posting tests. |
+| US-012 Close a fiscal period       | Planned | Depends on fiscal periods and journal posting.                    |
+
+## E03 — Product and inventory
+
+| Story                             | Status      | Evidence / remaining work                                                                                                                                   |
+| --------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-020 Maintain product catalogue | In progress | Tax, product, barcode, branch availability, and policy read-model migration is in progress. Price support, management API/UI, and integration tests remain. |
+| US-021 Receive stock              | Planned     | Requires inventory locations and immutable stock movements.                                                                                                 |
+| US-022 Adjust stock               | Planned     | Depends on stock movements, reason controls, and audit flow.                                                                                                |
+
+## E04 — Offline POS
+
+| Story                                   | Status  | Evidence / blocker                                                                  |
+| --------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| US-030 Start shift                      | Planned | Depends on device, access, product/policy cache, and cash-shift model.              |
+| US-031 Complete offline sale            | Planned | Depends on Dexie outbox, checkout UI, prices, shifts, and local policy enforcement. |
+| US-035 Record external terminal payment | Planned | Depends on POS sale/payment model.                                                  |
+| US-032 Synchronize sale                 | Planned | Depends on idempotency, sync endpoint, inventory and journal posting.               |
+| US-033 Refund sale                      | Planned | Deferred beyond the first trust path.                                               |
+| US-034 Close shift                      | Planned | Depends on shifts and cash variance accounting.                                     |
+
+## E05 — UAE compliance and reporting
+
+| Story                              | Status  | Evidence / blocker                                    |
+| ---------------------------------- | ------- | ----------------------------------------------------- |
+| US-040 Produce tax receipt/invoice | Planned | Depends on sales, tax data, and receipt presentation. |
+| US-041 View VAT summary            | Planned | Depends on posted journals and tax-period model.      |
+| US-042 View financial statements   | Planned | Depends on posted journals and reporting views.       |
