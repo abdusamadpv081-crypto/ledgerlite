@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "tsx watch src/main.ts",
-    "build": "tsc -p tsconfig.json",
-    "typecheck": "tsc --noEmit"
+    "build": "corepack pnpm --filter @ledgerlite/domain build && tsc -p tsconfig.json",
+    "typecheck": "corepack pnpm --filter @ledgerlite/domain build && tsc --noEmit"
   },
   "dependencies": {
     "@ledgerlite/domain": "workspace:*",
