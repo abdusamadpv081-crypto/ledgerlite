@@ -8,14 +8,14 @@
 
 ## Ordered backlog
 
-| Order | Priority | Epic | First deliverable |
-| --- | --- | --- | --- |
-| 1 | P0 | E06 Design system | Foundations, accessibility/RTL rules, and POS/accounting screen patterns. |
-| 2 | P0 | E01 SaaS foundation | Tenant, company, branch, user, permission, and audit model. |
-| 3 | P0 | E02 Accounting core | Chart of accounts and invariant-protected journal posting. |
-| 4 | P0 | E03 Product and inventory | Catalogue and branch stock-movement model. |
-| 5 | P0 | E04 Offline POS | Offline sale, outbox/sync, payments, refunds, shifts. |
-| 6 | P0 | E05 UAE compliance/reporting | UAE documents, VAT summary, and core reports. |
+| Order | Priority | Epic                         | First deliverable                                                         |
+| ----- | -------- | ---------------------------- | ------------------------------------------------------------------------- |
+| 1     | P0       | E06 Design system            | Foundations, accessibility/RTL rules, and POS/accounting screen patterns. |
+| 2     | P0       | E01 SaaS foundation          | Tenant, company, branch, user, permission, and audit model.               |
+| 3     | P0       | E02 Accounting core          | Chart of accounts and invariant-protected journal posting.                |
+| 4     | P0       | E03 Product and inventory    | Catalogue and branch stock-movement model.                                |
+| 5     | P0       | E04 Offline POS              | Offline sale, outbox/sync, payments, refunds, shifts.                     |
+| 6     | P0       | E05 UAE compliance/reporting | UAE documents, VAT summary, and core reports.                             |
 
 ## Day 1 — completed documentation baseline
 
@@ -69,12 +69,14 @@
 - [x] Approve MVP payment/hardware boundary; payment-provider integration remains a later pilot gate.
 - [x] Create monorepo and initial API/web/worker/database scaffold.
 - [x] Document database schema, data dictionary, integrity procedures, and operations/recovery requirements.
-- [ ] Install dependencies, run the initial scaffold checks, and add CI.
+- [x] Install dependencies; run initial type checks and application builds; add CI migration validation.
+- [ ] Add formatting, linting, test, and supply-chain quality checks to CI.
 - [ ] Implement the first vertical slice.
 
 ## Day 7 — proposed engineering work
 
-- [ ] Bring up local PostgreSQL and Redis, apply baseline migration, and verify database-role/migration workflow.
-- [ ] Add CI for formatting, type checks, tests, and migration validation.
+- [x] Bring up local PostgreSQL and Redis, apply baseline migration, and verify baseline schemas.
+- [x] Add CI for type checks, application builds, and migration validation.
+- [ ] Add CI formatting, linting, test, and supply-chain checks.
 - [ ] Implement company/branch/device schema and tenant-isolation tests.
 - [ ] Implement the first Dexie schema and local POS outbox test.
