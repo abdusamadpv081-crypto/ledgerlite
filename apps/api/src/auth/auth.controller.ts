@@ -1,16 +1,19 @@
-import { Controller, Get, Post, Query, Req, Res } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from "@nestjs/common";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { OidcLoginService } from "./oidc-login.service.js";
 import { SessionService } from "./session.service.js";
-
-export const SESSION_COOKIE_NAME = "__Host-ll_session";
-
-const sessionCookieOptions = {
-  httpOnly: true,
-  path: "/",
-  sameSite: "strict" as const,
-  secure: true,
-};
+import { CurrentActor } from "./authorization.decorators.js";
+import { SessionAuthenticationGuard } from "./session-authentication.guard.js";
+import { SESSION_COOKIE_NAME, sessionCookieOptions } from "./session-cookie.js";
+import type { AuthenticatedActor } from "./session.service.js";
 
 @Controller("auth")
 export class AuthController {
@@ -18,6 +21,12 @@ export class AuthController {
     private readonly oidcLogin: OidcLoginService,
     private readonly sessions: SessionService,
   ) {}
+
+  @Get("me")
+  @UseGuards(SessionAuthenticationGuard)
+  me(@CurrentActor() actor: AuthenticatedActor) {
+    return { userId: actor.userId };
+  }
 
   @Get("login")
   async login(

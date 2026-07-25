@@ -18,6 +18,8 @@ import {
 import { OidcLoginService } from "../auth/oidc-login.service.js";
 import { OidcTransactionCipher } from "../auth/oidc-transaction-cipher.js";
 import { AuthController } from "../auth/auth.controller.js";
+import { SessionAuthenticationGuard } from "../auth/session-authentication.guard.js";
+import { ScopedCapabilityGuard } from "../auth/scoped-capability.guard.js";
 
 @Module({
   controllers:
@@ -50,6 +52,8 @@ import { AuthController } from "../auth/auth.controller.js";
     AuthorizationService,
     SessionService,
     OidcLoginService,
+    SessionAuthenticationGuard,
+    ScopedCapabilityGuard,
   ],
 })
 export class AppModule {}

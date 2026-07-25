@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { FastifyReply, FastifyRequest } from "fastify";
-import {
-  AuthController,
-  SESSION_COOKIE_NAME,
-} from "../src/auth/auth.controller.js";
+import { AuthController } from "../src/auth/auth.controller.js";
+import { SESSION_COOKIE_NAME } from "../src/auth/session-cookie.js";
 import type { OidcLoginService } from "../src/auth/oidc-login.service.js";
 import type { SessionService } from "../src/auth/session.service.js";
 
