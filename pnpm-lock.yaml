@@ -61,6 +61,9 @@ importers:
       fastify:
         specifier: ^5.0.0
         version: 5.10.0
+      openid-client:
+        specifier: 6.8.4
+        version: 6.8.4
       pg:
         specifier: ^8.22.0
         version: 8.22.0
@@ -3048,6 +3051,12 @@ packages:
       }
     engines: { node: ">=6" }
 
+  jose@6.2.4:
+    resolution:
+      {
+        integrity: sha512-N8acGzVsQy6M/fjFcxtysNc4Q379TcM5dM/qKkNtsHFji88yANnXTr7BLeP75iPnFwBfQzM/jg2BZ9+HZrHCZA==,
+      }
+
   js-tokens@9.0.1:
     resolution:
       {
@@ -3256,12 +3265,24 @@ packages:
       }
     hasBin: true
 
+  oauth4webapi@3.8.6:
+    resolution:
+      {
+        integrity: sha512-iwemM91xz8nryHti2yTmg5fhyEMVOkOXwHNqbvcATjyajb5oQxCQzrNOA6uElRHuMhQQTKUyFKV9y/CNyg25BQ==,
+      }
+
   on-exit-leak-free@2.1.2:
     resolution:
       {
         integrity: sha512-0eJJY6hXLGf1udHwfNftBqH+g73EU4B504nZeKpz1sYRKafAghwxEJunB2O7rDZkL4PGfsMVnTXZ2EjibbqcsA==,
       }
     engines: { node: ">=14.0.0" }
+
+  openid-client@6.8.4:
+    resolution:
+      {
+        integrity: sha512-QSw0BA08piujetEwfZsHoTrDpMEha7GDZDicQqVwX4u0ChCjefvjDB++TZ8BTg76UpwhzIQgdvvfgfl3HpCSAw==,
+      }
 
   optionator@0.9.4:
     resolution:
@@ -5662,6 +5683,8 @@ snapshots:
 
   iterare@1.2.1: {}
 
+  jose@6.2.4: {}
+
   js-tokens@9.0.1: {}
 
   js-yaml@5.2.2:
@@ -5779,7 +5802,14 @@ snapshots:
       detect-libc: 2.1.2
     optional: true
 
+  oauth4webapi@3.8.6: {}
+
   on-exit-leak-free@2.1.2: {}
+
+  openid-client@6.8.4:
+    dependencies:
+      jose: 6.2.4
+      oauth4webapi: 3.8.6
 
   optionator@0.9.4:
     dependencies:
