@@ -13,6 +13,7 @@ let companyAId: string;
 let companyBId: string;
 let branchAId: string;
 let branchBId: string;
+let userId: string;
 
 async function asCompany<T>(
   companyId: string,
@@ -39,6 +40,14 @@ async function asCompany<T>(
 }
 
 beforeAll(async () => {
+  const user = await pool.query<{ id: string }>(
+    `INSERT INTO platform.app_user (identity_provider, external_subject, display_name)
+     VALUES ('test-oidc', $1, 'Test user')
+     RETURNING id`,
+    [`subject-${suffix}`],
+  );
+  userId = user.rows[0].id;
+
   const companies = await pool.query<{ id: string }>(
     `INSERT INTO platform.company (legal_name)
      VALUES ($1), ($2)
@@ -72,9 +81,30 @@ beforeAll(async () => {
       `b-${suffix}`,
     ],
   );
+
+  await pool.query(
+    `INSERT INTO platform.company_user (company_id, user_id)
+     VALUES ($1, $3), ($2, $3)`,
+    [companyAId, companyBId, userId],
+  );
+  await pool.query(
+    `INSERT INTO platform.role_assignment (company_id, company_user_id, branch_id, role_template)
+     SELECT company_id, id, $2, 'branch_manager'
+     FROM platform.company_user
+     WHERE company_id = $1 AND user_id = $3`,
+    [companyAId, branchAId, userId],
+  );
 });
 
 afterAll(async () => {
+  await pool.query(
+    "DELETE FROM platform.role_assignment WHERE company_id IN ($1, $2)",
+    [companyAId, companyBId],
+  );
+  await pool.query(
+    "DELETE FROM platform.company_user WHERE company_id IN ($1, $2)",
+    [companyAId, companyBId],
+  );
   await pool.query(
     "DELETE FROM platform.pos_device WHERE company_id IN ($1, $2)",
     [companyAId, companyBId],
@@ -87,6 +117,7 @@ afterAll(async () => {
     companyAId,
     companyBId,
   ]);
+  await pool.query("DELETE FROM platform.app_user WHERE id = $1", [userId]);
   await pool.end();
 });
 
@@ -130,5 +161,32 @@ describe("platform tenant isolation", () => {
         ),
       ),
     ).rejects.toThrow(/foreign key/i);
+  });
+
+  it("scopes memberships and roles, and denies audit mutation", async () => {
+    const visible = await asCompany(companyAId, async (client) => {
+      const memberships = await client.query(
+        "SELECT company_id FROM platform.company_user ORDER BY company_id",
+      );
+      const roles = await client.query(
+        "SELECT company_id, branch_id, role_template FROM platform.role_assignment",
+      );
+      return { memberships, roles };
+    });
+
+    expect(visible.memberships.rows).toEqual([{ company_id: companyAId }]);
+    expect(visible.roles.rows).toEqual([
+      {
+        company_id: companyAId,
+        branch_id: branchAId,
+        role_template: "branch_manager",
+      },
+    ]);
+
+    await expect(
+      asCompany(companyAId, (client) =>
+        client.query("UPDATE audit.event SET action = 'tampered'"),
+      ),
+    ).rejects.toThrow(/permission denied/i);
   });
 });
