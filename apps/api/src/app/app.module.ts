@@ -24,6 +24,7 @@ import { OidcTransactionCipher } from "../auth/oidc-transaction-cipher.js";
 import { AuthController } from "../auth/auth.controller.js";
 import { SessionAuthenticationGuard } from "../auth/session-authentication.guard.js";
 import { ScopedCapabilityGuard } from "../auth/scoped-capability.guard.js";
+import { CompanyContextService } from "../auth/company-context.service.js";
 
 @Module({
   controllers:
@@ -67,6 +68,7 @@ import { ScopedCapabilityGuard } from "../auth/scoped-capability.guard.js";
     AuthorizationService,
     CompanyBranchService,
     CatalogManagementService,
+    CompanyContextService,
     SessionService,
     OidcLoginService,
     SessionAuthenticationGuard,

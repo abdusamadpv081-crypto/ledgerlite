@@ -4,6 +4,7 @@ import { AuthController } from "../src/auth/auth.controller.js";
 import { SESSION_COOKIE_NAME } from "../src/auth/session-cookie.js";
 import type { OidcLoginService } from "../src/auth/oidc-login.service.js";
 import type { SessionService } from "../src/auth/session.service.js";
+import type { CompanyContextService } from "../src/auth/company-context.service.js";
 
 class ReplyStub {
   statusCode: number | undefined;
@@ -52,6 +53,7 @@ describe("AuthController", () => {
         },
       } as OidcLoginService,
       {} as SessionService,
+      {} as CompanyContextService,
     );
     const reply = new ReplyStub();
 
@@ -81,6 +83,7 @@ describe("AuthController", () => {
         },
       } as OidcLoginService,
       {} as SessionService,
+      {} as CompanyContextService,
     );
     const reply = new ReplyStub();
 
@@ -119,6 +122,7 @@ describe("AuthController", () => {
           invalidated.push(token);
         },
       } as SessionService,
+      {} as CompanyContextService,
     );
     const reply = new ReplyStub();
 
@@ -140,5 +144,36 @@ describe("AuthController", () => {
       },
     });
     expect(reply.statusCode).toBe(204);
+  });
+
+  it("lists only server-authorized active company contexts", async () => {
+    const controller = new AuthController(
+      {} as OidcLoginService,
+      {} as SessionService,
+      {
+        listForActor: async (userId: string) => {
+          expect(userId).toBe("user-id");
+          return [
+            {
+              companyId: "company-id",
+              legalName: "Ledger Lite Retail",
+              tradeName: null,
+              status: "active" as const,
+              roles: ["owner"],
+            },
+          ];
+        },
+      } as CompanyContextService,
+    );
+
+    await expect(controller.companies({ userId: "user-id" })).resolves.toEqual([
+      {
+        companyId: "company-id",
+        legalName: "Ledger Lite Retail",
+        tradeName: null,
+        status: "active",
+        roles: ["owner"],
+      },
+    ]);
   });
 });

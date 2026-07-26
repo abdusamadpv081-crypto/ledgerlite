@@ -14,18 +14,26 @@ import { CurrentActor } from "./authorization.decorators.js";
 import { SessionAuthenticationGuard } from "./session-authentication.guard.js";
 import { SESSION_COOKIE_NAME, sessionCookieOptions } from "./session-cookie.js";
 import type { AuthenticatedActor } from "./session.service.js";
+import { CompanyContextService } from "./company-context.service.js";
 
 @Controller("auth")
 export class AuthController {
   constructor(
     private readonly oidcLogin: OidcLoginService,
     private readonly sessions: SessionService,
+    private readonly companyContexts: CompanyContextService,
   ) {}
 
   @Get("me")
   @UseGuards(SessionAuthenticationGuard)
   me(@CurrentActor() actor: AuthenticatedActor) {
     return { userId: actor.userId };
+  }
+
+  @Get("companies")
+  @UseGuards(SessionAuthenticationGuard)
+  companies(@CurrentActor() actor: AuthenticatedActor) {
+    return this.companyContexts.listForActor(actor.userId);
   }
 
   @Get("login")
