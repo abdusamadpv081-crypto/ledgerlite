@@ -166,6 +166,11 @@ td small {
 .content-grid {
   grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.7fr);
 }
+.panel-stack {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+}
 .panel {
   padding: var(--space-6);
 }
@@ -184,6 +189,22 @@ label {
   gap: 0.4rem;
   font-size: 0.875rem;
   font-weight: 600;
+}
+.checkbox-label {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  align-content: end;
+  min-height: 4.2rem;
+}
+.checkbox-label input {
+  width: 1.25rem;
+  min-height: 1.25rem;
+}
+.form-help {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
 }
 .two-columns {
   display: grid;

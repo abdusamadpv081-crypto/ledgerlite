@@ -17,12 +17,46 @@ type Product = {
   sku: string | null;
   name: string;
   productKind: "stock" | "service";
+  isActive: boolean;
+  barcodes: string[];
   unitPrice: string;
   currency: string;
   taxTreatment: "inclusive" | "exclusive";
   taxCode: Tax | null;
+  updatedAt: string;
 };
 type Catalogue = { taxCodes: Tax[]; products: Product[] };
+type Branch = {
+  id: string;
+  code: string;
+  name: string;
+  status: "active" | "inactive" | "closed";
+};
+type ProductDraft = {
+  id: string;
+  updatedAt: string;
+  sku: string;
+  name: string;
+  productKind: Product["productKind"];
+  taxCodeId: string;
+  unitPrice: string;
+  isActive: boolean;
+  barcodes: string[];
+};
+
+function draft(product: Product): ProductDraft {
+  return {
+    id: product.id,
+    updatedAt: product.updatedAt,
+    sku: product.sku ?? "",
+    name: product.name,
+    productKind: product.productKind,
+    taxCodeId: product.taxCode?.id ?? "",
+    unitPrice: product.unitPrice,
+    isActive: product.isActive,
+    barcodes: product.barcodes,
+  };
+}
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, {
@@ -61,6 +95,8 @@ export default function HomePage() {
     taxCodes: [],
     products: [],
   });
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [productDraft, setProductDraft] = useState<ProductDraft | null>(null);
   const [message, setMessage] = useState("Checking your signed-in workspace…");
   const [loading, setLoading] = useState(true);
   const company = useMemo(
@@ -68,11 +104,27 @@ export default function HomePage() {
     [companies, companyId],
   );
   const canManage = company?.roles.includes("owner") ?? false;
+  function selectProduct(productId: string, products = catalogue.products) {
+    const selected = products.find((product) => product.id === productId);
+    setProductDraft(selected ? draft(selected) : null);
+  }
+  function changeProductDraft(change: Partial<ProductDraft>) {
+    setProductDraft((current) => (current ? { ...current, ...change } : null));
+  }
   async function loadCatalog(id = companyId) {
     if (!id) return;
     setLoading(true);
     try {
-      setCatalogue(await request<Catalogue>(`/companies/${id}/catalog`));
+      const [nextCatalogue, nextBranches] = await Promise.all([
+        request<Catalogue>(`/companies/${id}/catalog`),
+        request<Branch[]>(`/companies/${id}/branches`),
+      ]);
+      setCatalogue(nextCatalogue);
+      setBranches(nextBranches.filter((branch) => branch.status === "active"));
+      selectProduct(
+        productDraft?.id ?? nextCatalogue.products[0]?.id ?? "",
+        nextCatalogue.products,
+      );
       setMessage("Catalogue is up to date.");
     } catch (error) {
       setMessage(
@@ -146,6 +198,89 @@ export default function HomePage() {
     } catch (error) {
       setMessage(
         error instanceof Error ? error.message : "Could not create product.",
+      );
+    }
+  }
+  async function updateProduct(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!productDraft) return;
+    try {
+      await request(
+        `/companies/${companyId}/catalog/products/${productDraft.id}`,
+        {
+          method: "PATCH",
+          headers: commandHeaders(),
+          body: JSON.stringify({
+            expectedUpdatedAt: productDraft.updatedAt,
+            sku: productDraft.sku,
+            name: productDraft.name,
+            productKind: productDraft.productKind,
+            defaultTaxCodeId: productDraft.taxCodeId || null,
+            unitPrice: productDraft.unitPrice,
+            isActive: productDraft.isActive,
+          }),
+        },
+      );
+      await loadCatalog();
+      setMessage(
+        productDraft.isActive
+          ? "Product changes saved."
+          : "Product deactivated and kept for audit history.",
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Could not update product.",
+      );
+    }
+  }
+  async function createBarcode(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!productDraft) return;
+    const form = new FormData(event.currentTarget);
+    try {
+      await request(
+        `/companies/${companyId}/catalog/products/${productDraft.id}/barcodes`,
+        {
+          method: "POST",
+          headers: commandHeaders(),
+          body: JSON.stringify({
+            barcode: form.get("barcode"),
+            symbology: form.get("symbology") || undefined,
+          }),
+        },
+      );
+      event.currentTarget.reset();
+      await loadCatalog();
+      setMessage("Barcode added to the product.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error ? error.message : "Could not add barcode.",
+      );
+    }
+  }
+  async function setAvailability(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!productDraft) return;
+    const form = new FormData(event.currentTarget);
+    const branchId = String(form.get("branchId") ?? "");
+    try {
+      await request(
+        `/companies/${companyId}/catalog/branches/${branchId}/products/${productDraft.id}/availability`,
+        {
+          method: "POST",
+          headers: commandHeaders(),
+          body: JSON.stringify({
+            isSellable: form.get("isSellable") === "true",
+            reorderPoint: form.get("reorderPoint") || null,
+          }),
+        },
+      );
+      setMessage("Branch product controls saved.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not update branch controls.",
       );
     }
   }
@@ -340,6 +475,235 @@ export default function HomePage() {
             </form>
           </article>
         </section>
+        <section className="content-grid" aria-label="Product controls">
+          <article className="panel">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">Maintain</p>
+                <h2>Product details</h2>
+              </div>
+            </div>
+            <form className="stack" onSubmit={updateProduct}>
+              <label>
+                Product
+                <select
+                  value={productDraft?.id ?? ""}
+                  onChange={(event) => selectProduct(event.target.value)}
+                  disabled={!canManage || catalogue.products.length === 0}
+                >
+                  {catalogue.products.length === 0 ? (
+                    <option value="">Create a product first</option>
+                  ) : (
+                    catalogue.products.map((product) => (
+                      <option key={product.id} value={product.id}>
+                        {product.name}
+                        {product.sku ? ` · ${product.sku}` : ""}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </label>
+              <div className="two-columns">
+                <label>
+                  Product name
+                  <input
+                    value={productDraft?.name ?? ""}
+                    onChange={(event) =>
+                      changeProductDraft({ name: event.target.value })
+                    }
+                    required
+                    disabled={!canManage || !productDraft}
+                  />
+                </label>
+                <label>
+                  SKU
+                  <input
+                    value={productDraft?.sku ?? ""}
+                    onChange={(event) =>
+                      changeProductDraft({ sku: event.target.value })
+                    }
+                    disabled={!canManage || !productDraft}
+                  />
+                </label>
+              </div>
+              <div className="two-columns">
+                <label>
+                  Type
+                  <select
+                    value={productDraft?.productKind ?? "stock"}
+                    onChange={(event) =>
+                      changeProductDraft({
+                        productKind: event.target
+                          .value as Product["productKind"],
+                      })
+                    }
+                    disabled={!canManage || !productDraft}
+                  >
+                    <option value="stock">Stock item</option>
+                    <option value="service">Service</option>
+                  </select>
+                </label>
+                <label>
+                  VAT code
+                  <select
+                    value={productDraft?.taxCodeId ?? ""}
+                    onChange={(event) =>
+                      changeProductDraft({ taxCodeId: event.target.value })
+                    }
+                    disabled={!canManage || !productDraft}
+                  >
+                    <option value="">No VAT</option>
+                    {catalogue.taxCodes.map((tax) => (
+                      <option key={tax.id} value={tax.id}>
+                        {tax.code} · {tax.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="two-columns">
+                <label>
+                  Retail price (AED)
+                  <input
+                    value={productDraft?.unitPrice ?? ""}
+                    onChange={(event) =>
+                      changeProductDraft({ unitPrice: event.target.value })
+                    }
+                    inputMode="decimal"
+                    pattern="\d+(\.\d{1,6})?"
+                    required
+                    disabled={!canManage || !productDraft}
+                  />
+                </label>
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={productDraft?.isActive ?? false}
+                    onChange={(event) =>
+                      changeProductDraft({ isActive: event.target.checked })
+                    }
+                    disabled={!canManage || !productDraft}
+                  />
+                  Available at POS
+                </label>
+              </div>
+              <p className="form-help">
+                Price changes retain the earlier price for accounting and audit.
+              </p>
+              <button
+                className="primary"
+                disabled={!canManage || !productDraft}
+              >
+                Save product changes
+              </button>
+            </form>
+          </article>
+          <div className="panel-stack">
+            <article className="panel">
+              <div className="panel-heading">
+                <div>
+                  <p className="eyebrow">Scan</p>
+                  <h2>Barcode</h2>
+                </div>
+              </div>
+              <form className="stack compact" onSubmit={createBarcode}>
+                <label>
+                  Barcode value
+                  <input
+                    name="barcode"
+                    required
+                    placeholder="e.g. 629100000001"
+                    disabled={!canManage || !productDraft}
+                  />
+                </label>
+                <label>
+                  Symbology
+                  <input
+                    name="symbology"
+                    placeholder="Optional, e.g. EAN-13"
+                    disabled={!canManage || !productDraft}
+                  />
+                </label>
+                <button
+                  className="secondary"
+                  disabled={!canManage || !productDraft}
+                >
+                  Add barcode
+                </button>
+                {productDraft?.barcodes.length ? (
+                  <p className="form-help">
+                    Current: {productDraft.barcodes.join(", ")}
+                  </p>
+                ) : null}
+              </form>
+            </article>
+            <article className="panel">
+              <div className="panel-heading">
+                <div>
+                  <p className="eyebrow">Branch</p>
+                  <h2>POS availability</h2>
+                </div>
+              </div>
+              <form className="stack compact" onSubmit={setAvailability}>
+                <label>
+                  Branch
+                  <select
+                    name="branchId"
+                    required
+                    disabled={
+                      !canManage || !productDraft || branches.length === 0
+                    }
+                  >
+                    {branches.length === 0 ? (
+                      <option value="">No active branches</option>
+                    ) : (
+                      branches.map((branch) => (
+                        <option key={branch.id} value={branch.id}>
+                          {branch.code} · {branch.name}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </label>
+                <div className="two-columns">
+                  <label>
+                    Sell at this branch
+                    <select
+                      name="isSellable"
+                      defaultValue="true"
+                      disabled={
+                        !canManage || !productDraft || branches.length === 0
+                      }
+                    >
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  </label>
+                  <label>
+                    Reorder point
+                    <input
+                      name="reorderPoint"
+                      inputMode="decimal"
+                      pattern="\d+(\.\d{1,6})?"
+                      placeholder="Optional"
+                      disabled={
+                        !canManage || !productDraft || branches.length === 0
+                      }
+                    />
+                  </label>
+                </div>
+                <button
+                  className="secondary"
+                  disabled={
+                    !canManage || !productDraft || branches.length === 0
+                  }
+                >
+                  Save branch controls
+                </button>
+              </form>
+            </article>
+          </div>
+        </section>
         <section className="panel table-panel">
           <div className="panel-heading">
             <div>
@@ -361,6 +725,8 @@ export default function HomePage() {
                 <tr>
                   <th>Product</th>
                   <th>SKU</th>
+                  <th>Barcodes</th>
+                  <th>Status</th>
                   <th>Tax</th>
                   <th className="numeric">Retail price</th>
                 </tr>
@@ -368,11 +734,11 @@ export default function HomePage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={4}>Loading catalogue…</td>
+                    <td colSpan={6}>Loading catalogue…</td>
                   </tr>
                 ) : catalogue.products.length === 0 ? (
                   <tr>
-                    <td colSpan={4}>
+                    <td colSpan={6}>
                       No products yet. Create the first item above.
                     </td>
                   </tr>
@@ -388,6 +754,8 @@ export default function HomePage() {
                         </small>
                       </td>
                       <td>{item.sku ?? "—"}</td>
+                      <td>{item.barcodes.join(", ") || "—"}</td>
+                      <td>{item.isActive ? "Active" : "Inactive"}</td>
                       <td>
                         {item.taxCode
                           ? `${item.taxCode.code} (${Number(item.taxCode.rate) * 100}%)`
