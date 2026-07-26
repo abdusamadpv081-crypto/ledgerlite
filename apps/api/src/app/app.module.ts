@@ -25,6 +25,8 @@ import { AuthController } from "../auth/auth.controller.js";
 import { SessionAuthenticationGuard } from "../auth/session-authentication.guard.js";
 import { ScopedCapabilityGuard } from "../auth/scoped-capability.guard.js";
 import { CompanyContextService } from "../auth/company-context.service.js";
+import { DeviceManagementController } from "../device/device-management.controller.js";
+import { DeviceManagementService } from "../device/device-management.service.js";
 
 @Module({
   controllers:
@@ -33,6 +35,7 @@ import { CompanyContextService } from "../auth/company-context.service.js";
           AppController,
           AuthController,
           CompanyController,
+          DeviceManagementController,
           CatalogManagementController,
           CatalogController,
         ]
@@ -40,6 +43,7 @@ import { CompanyContextService } from "../auth/company-context.service.js";
           AppController,
           AuthController,
           CompanyController,
+          DeviceManagementController,
           CatalogManagementController,
         ],
   providers: [
@@ -68,6 +72,7 @@ import { CompanyContextService } from "../auth/company-context.service.js";
     AuthorizationService,
     CompanyBranchService,
     CatalogManagementService,
+    DeviceManagementService,
     CompanyContextService,
     SessionService,
     OidcLoginService,
