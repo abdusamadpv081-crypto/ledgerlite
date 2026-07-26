@@ -22,6 +22,7 @@ type Product = Readonly<{
   name: string;
   productKind: "stock" | "service";
   isActive: boolean;
+  barcodes: readonly string[];
   taxCode: TaxCode | null;
   unitPrice: string;
   currency: string;
@@ -53,6 +54,16 @@ export type BranchAvailability = Readonly<{
   isSellable: boolean;
   reorderPoint?: string | null;
 }>;
+export type UpdateProduct = Readonly<{
+  expectedUpdatedAt: string;
+  sku?: string | null;
+  name?: string;
+  productKind?: "stock" | "service";
+  defaultTaxCodeId?: string | null;
+  isActive?: boolean;
+  unitPrice?: string;
+  priceListName?: string;
+}>;
 type CommandResponse<T> = Readonly<{ data: T; correlationId: string }>;
 type IdempotencyRow = Readonly<{
   is_new: boolean;
@@ -64,6 +75,9 @@ const productSelect = `product.id, product.sku, product.name, product.product_ki
   product.is_active, tax.id AS tax_id, tax.code AS tax_code, tax.name AS tax_name,
   tax.rate::text AS tax_rate, price.unit_price::text AS unit_price,
   price.currency, price.tax_treatment,
+  COALESCE((SELECT array_agg(barcode.barcode ORDER BY barcode.barcode)
+    FROM catalog.product_barcode AS barcode
+    WHERE barcode.product_id = product.id AND barcode.is_active), ARRAY[]::text[]) AS barcodes,
   to_char(product.updated_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS updated_at`;
 
 function canonicalJson(value: unknown): string {
@@ -98,6 +112,7 @@ function product(row: Record<string, unknown>): Product {
     name: row.name as string,
     productKind: row.product_kind as Product["productKind"],
     isActive: row.is_active as boolean,
+    barcodes: (row.barcodes as string[] | undefined) ?? [],
     taxCode,
     unitPrice: row.unit_price as string,
     currency: row.currency as string,
@@ -214,11 +229,7 @@ export class CatalogManagementService {
           "INSERT INTO catalog.price_list_item (company_id, price_list_id, product_id, unit_price) VALUES ($1, $2, $3, $4)",
           [context.companyId, priceListId, productId, input.unitPrice],
         );
-        const detail = await client.query<Record<string, unknown>>(
-          `SELECT ${productSelect} FROM catalog.product AS product LEFT JOIN catalog.tax_code AS tax ON tax.id = product.default_tax_code_id JOIN catalog.price_list_item AS item ON item.product_id = product.id JOIN catalog.price_list AS price ON price.id = item.price_list_id WHERE product.id = $1`,
-          [productId],
-        );
-        const data = product(detail.rows[0]);
+        const data = await this.productDetail(client, productId);
         await this.audit(
           client,
           context.companyId,
@@ -231,6 +242,104 @@ export class CatalogManagementService {
           },
         );
         return { data, correlationId };
+      },
+    );
+  }
+
+  async updateProduct(
+    context: Context,
+    productId: string,
+    input: UpdateProduct,
+    key: string,
+  ): Promise<CommandResponse<Product>> {
+    return this.command(
+      context,
+      "catalog.product.update",
+      key,
+      input,
+      async (client, correlationId) => {
+        const current = await client.query<{ id: string; is_active: boolean }>(
+          `SELECT id, is_active FROM catalog.product
+           WHERE id = $1 AND updated_at = $2::timestamptz FOR UPDATE`,
+          [productId, input.expectedUpdatedAt],
+        );
+        if (current.rowCount !== 1) {
+          const exists = await client.query(
+            "SELECT id FROM catalog.product WHERE id = $1",
+            [productId],
+          );
+          if (exists.rowCount !== 1)
+            throw new NotFoundException("Product was not found.");
+          throw new ConflictException(
+            "Product was changed by another user. Refresh and try again.",
+          );
+        }
+
+        const values: unknown[] = [];
+        const assignments: string[] = [];
+        const fields: ReadonlyArray<
+          readonly [
+            keyof Pick<
+              UpdateProduct,
+              "sku" | "name" | "productKind" | "defaultTaxCodeId" | "isActive"
+            >,
+            string,
+          ]
+        > = [
+          ["sku", "sku"],
+          ["name", "name"],
+          ["productKind", "product_kind"],
+          ["defaultTaxCodeId", "default_tax_code_id"],
+          ["isActive", "is_active"],
+        ];
+        for (const [property, column] of fields) {
+          const value = input[property];
+          if (value !== undefined) {
+            values.push(value);
+            assignments.push(`${column} = $${values.length}`);
+          }
+        }
+        values.push(productId);
+        await client.query(
+          assignments.length > 0
+            ? `UPDATE catalog.product SET ${assignments.join(", ")}
+               WHERE id = $${values.length}`
+            : "UPDATE catalog.product SET updated_at = updated_at WHERE id = $1",
+          assignments.length > 0 ? values : [productId],
+        );
+
+        if (input.unitPrice !== undefined)
+          await this.replaceRetailPrice(
+            client,
+            context.companyId,
+            productId,
+            input.priceListName ?? "Default retail",
+            input.unitPrice,
+          );
+
+        const action =
+          input.isActive === false && current.rows[0].is_active
+            ? "catalog.product.deactivated"
+            : input.isActive === true && !current.rows[0].is_active
+              ? "catalog.product.reactivated"
+              : "catalog.product.updated";
+        await this.audit(
+          client,
+          context.companyId,
+          action,
+          "catalog.product",
+          productId,
+          {
+            changedFields: [
+              ...assignments.map((assignment) => assignment.split(" ")[0]),
+              ...(input.unitPrice === undefined ? [] : ["unit_price"]),
+            ],
+          },
+        );
+        return {
+          data: await this.productDetail(client, productId),
+          correlationId,
+        };
       },
     );
   }
@@ -358,6 +467,79 @@ export class CatalogManagementService {
       );
       return response;
     });
+  }
+  private async replaceRetailPrice(
+    client: PoolClient,
+    companyId: string,
+    productId: string,
+    priceListName: string,
+    unitPrice: string,
+  ): Promise<void> {
+    await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [
+      `${companyId}:${priceListName}`,
+    ]);
+    const current = await client.query<{
+      id: string;
+      effective_from: string;
+    }>(
+      `SELECT item.id, item.effective_from
+       FROM catalog.price_list_item AS item
+       JOIN catalog.price_list AS list ON list.id = item.price_list_id
+       WHERE item.product_id = $1 AND list.name = $2 AND list.status = 'active'
+         AND list.effective_from <= now()
+         AND (list.effective_until IS NULL OR list.effective_until > now())
+         AND item.effective_from <= now()
+         AND (item.effective_until IS NULL OR item.effective_until > now())
+       ORDER BY item.effective_from DESC LIMIT 1 FOR UPDATE OF item`,
+      [productId, priceListName],
+    );
+    if (current.rowCount !== 1)
+      throw new ConflictException("Product has no current retail price.");
+    const effective = await client.query<{ value: string }>(
+      `SELECT GREATEST(
+         clock_timestamp(),
+         $1::timestamptz + interval '1 microsecond'
+       )::timestamptz::text AS value`,
+      [current.rows[0].effective_from],
+    );
+    await client.query(
+      "UPDATE catalog.price_list_item SET effective_until = $1::timestamptz WHERE id = $2",
+      [effective.rows[0].value, current.rows[0].id],
+    );
+    await client.query(
+      `INSERT INTO catalog.price_list_item (
+        company_id, price_list_id, product_id, unit_price, effective_from
+      )
+      SELECT item.company_id, item.price_list_id, item.product_id, $1, $2::timestamptz
+      FROM catalog.price_list_item AS item WHERE item.id = $3`,
+      [unitPrice, effective.rows[0].value, current.rows[0].id],
+    );
+  }
+  private async productDetail(
+    client: PoolClient,
+    productId: string,
+  ): Promise<Product> {
+    const detail = await client.query<Record<string, unknown>>(
+      `SELECT ${productSelect}
+       FROM catalog.product AS product
+       LEFT JOIN catalog.tax_code AS tax ON tax.id = product.default_tax_code_id
+       JOIN LATERAL (
+         SELECT item.unit_price, list.currency, list.tax_treatment
+         FROM catalog.price_list_item AS item
+         JOIN catalog.price_list AS list ON list.id = item.price_list_id
+         WHERE item.product_id = product.id AND list.status = 'active'
+           AND list.effective_from <= now()
+           AND (list.effective_until IS NULL OR list.effective_until > now())
+           AND item.effective_from <= now()
+           AND (item.effective_until IS NULL OR item.effective_until > now())
+         ORDER BY item.effective_from DESC LIMIT 1
+       ) AS price ON true
+       WHERE product.id = $1`,
+      [productId],
+    );
+    if (detail.rowCount !== 1)
+      throw new NotFoundException("Product was not found.");
+    return product(detail.rows[0]);
   }
   private async audit(
     client: PoolClient,

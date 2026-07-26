@@ -20,6 +20,10 @@ describe("CatalogManagementController", () => {
         calls.push(args);
         return { accepted: true };
       },
+      updateProduct: (...args: unknown[]) => {
+        calls.push(args);
+        return { accepted: true };
+      },
       createBarcode: (...args: unknown[]) => {
         calls.push(args);
         return { accepted: true };
@@ -40,6 +44,17 @@ describe("CatalogManagementController", () => {
       companyId,
       { name: "Coffee", unitPrice: "12.50" },
       "product-create-1",
+      actor,
+    );
+    controller.updateProduct(
+      companyId,
+      "d556b3b8-fdbc-4ea6-9c0b-531dd8e704ed",
+      {
+        expectedUpdatedAt: "2026-07-26T08:30:00.000000Z",
+        name: "Coffee beans",
+        unitPrice: "15.00",
+      },
+      "product-update-1",
       actor,
     );
     controller.createBarcode(
@@ -77,6 +92,16 @@ describe("CatalogManagementController", () => {
       [
         { companyId, actorUserId: actor.userId },
         "d556b3b8-fdbc-4ea6-9c0b-531dd8e704ed",
+        {
+          expectedUpdatedAt: "2026-07-26T08:30:00.000000Z",
+          name: "Coffee beans",
+          unitPrice: "15.00",
+        },
+        "product-update-1",
+      ],
+      [
+        { companyId, actorUserId: actor.userId },
+        "d556b3b8-fdbc-4ea6-9c0b-531dd8e704ed",
         { barcode: "629100000001" },
         "barcode-create-1",
       ],
@@ -108,6 +133,18 @@ describe("CatalogManagementController", () => {
         companyId,
         { code: "VAT5", name: "VAT 5%", rate: "0.05" },
         "short",
+        actor,
+      ),
+    ).toThrow(BadRequestException);
+    expect(() =>
+      controller.updateProduct(
+        companyId,
+        "d556b3b8-fdbc-4ea6-9c0b-531dd8e704ed",
+        {
+          expectedUpdatedAt: "2026-07-26T08:30:00.000000Z",
+          priceListName: "Default retail",
+        },
+        "product-update-1",
         actor,
       ),
     ).toThrow(BadRequestException);
