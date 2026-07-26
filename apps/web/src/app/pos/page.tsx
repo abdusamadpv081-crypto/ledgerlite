@@ -536,8 +536,8 @@ export default function PosAccessPage() {
                       value={newPin}
                       onChange={(event) => setNewPin(event.target.value)}
                       minLength={8}
-                      maxLength={12}
-                      pattern="[0-9]{8,12}"
+                      maxLength={16}
+                      pattern="[0-9]{8,16}"
                       required
                       disabled={
                         pinSubmitting ||
@@ -555,8 +555,8 @@ export default function PosAccessPage() {
                       value={confirmPin}
                       onChange={(event) => setConfirmPin(event.target.value)}
                       minLength={8}
-                      maxLength={12}
-                      pattern="[0-9]{8,12}"
+                      maxLength={16}
+                      pattern="[0-9]{8,16}"
                       required
                       disabled={
                         pinSubmitting ||

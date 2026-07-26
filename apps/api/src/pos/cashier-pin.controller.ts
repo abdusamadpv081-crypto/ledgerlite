@@ -30,7 +30,7 @@ const idempotencyKey = z
 const setPin = z
   .object({
     deviceId: id,
-    pin: z.string().regex(/^\d{8,12}$/),
+    pin: z.string().regex(/^\d{8,16}$/),
   })
   .strict();
 
