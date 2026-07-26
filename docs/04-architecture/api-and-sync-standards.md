@@ -84,6 +84,8 @@ historical sale or journal.
 | `POST /api/v1/companies/:companyId/branches/:branchId/pos/offline-grants/challenges` | `pos.shift.operate`                                    | Create a five-minute, one-use device-proof challenge.                                      |
 | `POST /api/v1/companies/:companyId/branches/:branchId/pos/offline-grants`            | `pos.shift.operate`                                    | Verify the registered device signature and issue a policy-bounded operational grant.       |
 | `POST /api/v1/companies/:companyId/branches/:branchId/pos/pin`                       | `pos.shift.operate`                                    | Set/reset the caller's server Argon2id PIN verifier for a registered device.               |
+| `GET /api/v1/companies/:companyId/branches/:branchId/pos/shifts/current`             | `pos.shift.operate`                                    | Read the caller's current active cash shift in the selected branch.                        |
+| `POST /api/v1/companies/:companyId/branches/:branchId/pos/shifts`                    | `pos.shift.operate`                                    | Idempotently open the caller's cash shift on a registered device.                          |
 | `GET /api/v1/companies/:companyId/accounting/chart`                                  | `accounting.journal.read`                              | Read the active chart and accounts.                                                        |
 | `POST /api/v1/companies/:companyId/accounting/chart/starter`                         | `accounting.chart.manage`                              | Create the UAE retail starter chart once.                                                  |
 | `POST /api/v1/companies/:companyId/accounting/chart/accounts`                        | `accounting.chart.manage`                              | Add a tailored posting or parent account.                                                  |
@@ -112,6 +114,14 @@ the value with a per-user salt plus environment-managed pepper, writes no raw
 PIN or fast PIN digest to idempotency/audit storage, and returns only the
 versioned local-unlock policy. The browser derives and encrypts its separate
 local verifier after the command succeeds.
+
+Cash-shift opening accepts a non-negative opening float with at most two decimal
+places in the company base currency. The command confirms the registered device,
+snapshots the applicable policy, limits each device and cashier to one active
+shift, and records command-correlated audit evidence. An opening float is a
+cash-custody value only: it neither creates a sale nor posts a journal entry.
+The current command is online-only; an offline `cash_shift_opened` event is
+deferred until the encrypted POS outbox exists.
 
 ## POS sync endpoint contract
 

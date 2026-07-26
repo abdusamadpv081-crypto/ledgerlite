@@ -54,7 +54,7 @@ Functions that create postings use `SECURITY INVOKER` by default and validate te
 | Journal-post trigger/function                  | Calls balance/period/account checks at posting, not per partially-built line.                              |
 | Company-consistency trigger                    | Rejects cross-company foreign-key references where a simple composite FK is impractical.                   |
 | Fiscal-period exclusion constraint             | Prevents overlapping date ranges for the same company.                                                     |
-| Open-shift unique partial index                | One active shift per device, e.g. `WHERE status = 'open'`.                                                 |
+| Open-shift unique partial indexes              | One active shift per registered device and per cashier, including a close-requested shift.                 |
 | Source-event unique index                      | Prevents duplicate system posting for a sync event.                                                        |
 | Audit trigger/use-case call                    | Logs privileged configuration/role/device actions and financial corrections.                               |
 | Cashier-PIN version guard                      | Allows only a new salt/hash and the next monotonically increasing PIN verifier version.                    |
@@ -64,6 +64,24 @@ whose company and cashier user match its transaction-local tenant and actor;
 there is no broad PIN-verifier read API. The server writes a salted Argon2id
 result and audit metadata only. The browser-local PBKDF2 verifier, raw PIN,
 and failed-attempt state do not enter PostgreSQL.
+
+`pos.cash_shift` also has forced RLS and is self-only for the opening cashier.
+Its composite device foreign key prevents a cross-branch till assignment; the
+policy snapshot and opening float are immutable. Runtime access has no update
+grant, and the immutable trigger is a second database boundary. The opening
+float is constrained to a non-negative two-decimal custody amount and creates
+no journal entry.
+
+## Cash-shift opening procedure
+
+1. Acquire the tenant-and-actor-scoped command idempotency anchor.
+2. Lock/read the registered device in the selected branch and the company base
+   currency; reject any suspended, retired, missing, or cross-branch device.
+3. Read or initialize the effective policy snapshot for the branch.
+4. Insert the immutable `pos.cash_shift` opening record. Partial unique indexes
+   reject a second active shift for either the device or cashier.
+5. Write the correlated `pos.cash_shift.opened` audit event and complete the
+   idempotency response. Do not create a journal entry.
 
 ## POS sale acceptance procedure
 

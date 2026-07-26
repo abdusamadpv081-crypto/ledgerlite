@@ -15,8 +15,8 @@ This is the release-one logical schema. Columns listed as `FK` must also preserv
 | `platform.company_user`           | `company_id`, `user_id`, status, effective dates                                       | Tenant membership.                                                 |
 | `platform.role_assignment`        | membership FK, role template, branch scope, effective dates                            | Role template maps to capabilities.                                |
 | `platform.pos_device`             | `id`, company/branch FK, public key, status, last sync, app/schema/policy version      | Registered browser installation; unique public-key fingerprint.    |
-| `platform.policy_version`         | company/branch scope, stock/offline/PIN policy, policy JSON, effective time, version    | Immutable configuration snapshot referenced by local events.       |
-| `pos.cashier_pin`                 | company/cashier membership FK, verifier version, Argon2id salt/hash, changed time       | Self-only server PIN verifier; no raw PIN or browser verifier.     |
+| `platform.policy_version`         | company/branch scope, stock/offline/PIN policy, policy JSON, effective time, version   | Immutable configuration snapshot referenced by local events.       |
+| `pos.cashier_pin`                 | company/cashier membership FK, verifier version, Argon2id salt/hash, changed time      | Self-only server PIN verifier; no raw PIN or browser verifier.     |
 
 ## Catalogue and tax
 
@@ -32,14 +32,14 @@ This is the release-one logical schema. Columns listed as `FK` must also preserv
 
 ## POS and synchronization
 
-| Table                 | Key fields                                                                                                                     | Notes                                                               |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| `pos.sync_event`      | `id`, company/branch/device/cashier/shift FK, event type, local sequence, occurred time, policy version, payload, result state | Immutable idempotency anchor; unique `(company_id, device_id, id)`. |
-| `pos.cash_shift`      | company/branch/device/cashier FK, opening float, expected/counted cash, variance, status, opened/closed time                   | One open shift per device; constraints enforce valid state.         |
-| `pos.sale`            | company/branch/shift FK, receipt number, source event FK, status, totals, currency, occurred time                              | Created only after accepted event; source event unique.             |
-| `pos.sale_line`       | sale/product/tax FK, quantity, unit price, discount, tax, totals                                                               | Immutable commercial line snapshot.                                 |
-| `pos.payment_attempt` | sale FK, method, amount, currency, state, external reference, provider metadata                                                | Never includes cardholder data.                                     |
-| `pos.refund`          | original sale/source event FK, status, reason, totals                                                                          | Linked correction; no update of original sale.                      |
+| Table                 | Key fields                                                                                                                     | Notes                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| `pos.sync_event`      | `id`, company/branch/device/cashier/shift FK, event type, local sequence, occurred time, policy version, payload, result state | Immutable idempotency anchor; unique `(company_id, device_id, id)`.        |
+| `pos.cash_shift`      | company/branch/device/cashier/policy FK, base currency, opening float, source, status, opened time                             | Immutable opening custody record; one active shift per device and cashier. |
+| `pos.sale`            | company/branch/shift FK, receipt number, source event FK, status, totals, currency, occurred time                              | Created only after accepted event; source event unique.                    |
+| `pos.sale_line`       | sale/product/tax FK, quantity, unit price, discount, tax, totals                                                               | Immutable commercial line snapshot.                                        |
+| `pos.payment_attempt` | sale FK, method, amount, currency, state, external reference, provider metadata                                                | Never includes cardholder data.                                            |
+| `pos.refund`          | original sale/source event FK, status, reason, totals                                                                          | Linked correction; no update of original sale.                             |
 
 ## Inventory
 
