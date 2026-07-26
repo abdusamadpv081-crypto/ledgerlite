@@ -91,6 +91,7 @@ export class OfflineGrantController {
 }
 
 @Controller("pos/offline-grants")
+@UseGuards(SessionAuthenticationGuard)
 export class OfflineGrantVerificationKeyController {
   constructor(private readonly grants: OfflineGrantService) {}
 
