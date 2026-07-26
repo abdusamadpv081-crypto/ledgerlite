@@ -79,4 +79,4 @@
 - [x] Add CI for type checks, application builds, and migration validation.
 - [x] Add CI formatting, linting, test, supply-chain, and CodeQL checks.
 - [x] Implement company/branch/device schema and tenant-isolation tests.
-- [ ] Implement the first Dexie schema and local POS outbox test.
+- [x] Implement the first Dexie schema, encrypted local POS catalogue/outbox, and persistence/tamper tests.
