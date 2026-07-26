@@ -12,7 +12,6 @@ import {
   KeyRound,
   Laptop,
   MonitorSmartphone,
-  Plus,
   RefreshCw,
   Settings2,
   ShieldCheck,
