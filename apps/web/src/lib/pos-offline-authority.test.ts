@@ -6,6 +6,7 @@ import {
   type OfflineAuthorityScope,
   type OfflineAuthorityVerificationKey,
 } from "./pos-offline-authority";
+import { deriveCashierPinVerifier } from "./pos-cashier-pin";
 
 const scope: OfflineAuthorityScope = {
   companyId: "c22ff1c3-253f-4457-bcc5-3098d827de20",
@@ -102,5 +103,32 @@ describe("offline authority verification", () => {
         { ...scope, cashierUserId: "3e3e9195-2cb8-48c5-8a9d-6c629b15bb90" },
       ),
     ).rejects.toThrow("does not match");
+  });
+});
+
+describe("cashier PIN verifier", () => {
+  it("derives a stable PBKDF2 verifier without retaining PIN text", async () => {
+    const salt = new Uint8Array(16).fill(7);
+    const [first, repeated, changed] = await Promise.all([
+      deriveCashierPinVerifier(
+        webcrypto as unknown as Crypto,
+        "82537491",
+        salt,
+      ),
+      deriveCashierPinVerifier(
+        webcrypto as unknown as Crypto,
+        "82537491",
+        salt,
+      ),
+      deriveCashierPinVerifier(
+        webcrypto as unknown as Crypto,
+        "91382746",
+        salt,
+      ),
+    ]);
+
+    expect(first).toEqual(repeated);
+    expect(first).not.toEqual(changed);
+    expect(first).toHaveLength(32);
   });
 });
