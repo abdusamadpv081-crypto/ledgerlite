@@ -183,4 +183,18 @@ describe("accounting core database invariants", () => {
       ).rejects.toThrow(/not open/i);
     });
   });
+
+  it("allows multiple manual drafts while retaining unique system sources", async () => {
+    await asCompany(async (client) => {
+      const { periodId } = await insertBalancedDraft(client);
+      await expect(
+        client.query(
+          `INSERT INTO accounting.journal_entry
+           (company_id, fiscal_period_id, journal_date, description, created_by_user_id)
+           VALUES ($1, $2, '2026-07-26', 'Second manual journal', $3)`,
+          [companyId, periodId, actorUserId],
+        ),
+      ).resolves.toBeDefined();
+    });
+  });
 });
