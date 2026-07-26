@@ -1,7 +1,14 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { PackagePlus, Plus, RefreshCw, Store, Tags } from "lucide-react";
+import {
+  MonitorSmartphone,
+  PackagePlus,
+  Plus,
+  RefreshCw,
+  Store,
+  Tags,
+} from "lucide-react";
 import { commandHeaders, request } from "../lib/api";
 type Company = {
   companyId: string;
@@ -282,6 +289,10 @@ export default function HomePage() {
           <a href="/finance">
             <Store size={18} />
             Finance
+          </a>
+          <a href="/devices">
+            <MonitorSmartphone size={18} />
+            POS devices
           </a>
         </nav>
         <p className="sidebar-note">

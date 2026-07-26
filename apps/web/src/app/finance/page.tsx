@@ -11,6 +11,7 @@ import {
   BookOpen,
   CalendarDays,
   Landmark,
+  MonitorSmartphone,
   Plus,
   ReceiptText,
   RefreshCw,
@@ -413,6 +414,10 @@ export default function FinancePage() {
           <a href="#journals">
             <ReceiptText size={18} />
             Journals
+          </a>
+          <a href="/devices">
+            <MonitorSmartphone size={18} />
+            POS devices
           </a>
         </nav>
         <p className="sidebar-note">

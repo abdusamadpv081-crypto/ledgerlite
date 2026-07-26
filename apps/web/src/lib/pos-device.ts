@@ -1,0 +1,185 @@
+import Dexie, { type Table } from "dexie";
+
+export const POS_DEVICE_APP_VERSION = "0.1.0";
+export const POS_DEVICE_LOCAL_SCHEMA_VERSION = 1;
+
+export type DevicePublicKeyJwk = Readonly<{
+  alg: "ES256";
+  crv: "P-256";
+  ext: true;
+  key_ops: readonly ["verify"];
+  kty: "EC";
+  x: string;
+  y: string;
+}>;
+export type LocalPosDevice = Readonly<{
+  id: string;
+  companyId: string;
+  branchId: string;
+  displayName: string;
+  publicKeyJwk: DevicePublicKeyJwk;
+  privateSigningKey: CryptoKey;
+  registrationIdempotencyKey: string;
+  state: "pending" | "registered";
+  deviceId: string | null;
+  publicKeyFingerprint: string | null;
+  updatedAt: string;
+}>;
+
+class PosDeviceDatabase extends Dexie {
+  devices!: Table<LocalPosDevice, string>;
+
+  constructor() {
+    super("ledgerlite-pos");
+    this.version(1).stores({
+      devices: "&id, companyId, branchId, state, deviceId, updatedAt",
+    });
+  }
+}
+
+let database: PosDeviceDatabase | undefined;
+
+function deviceId(companyId: string, branchId: string) {
+  return `${companyId}:${branchId}`;
+}
+
+function browserDatabase(): PosDeviceDatabase {
+  if (typeof window === "undefined")
+    throw new Error("POS device storage is available only in a browser.");
+  database ??= new PosDeviceDatabase();
+  return database;
+}
+
+function browserCrypto(): Crypto {
+  if (typeof window === "undefined" || !window.isSecureContext)
+    throw new Error(
+      "Device registration needs HTTPS (or localhost) so the browser can protect its signing key.",
+    );
+  if (!window.crypto?.subtle)
+    throw new Error(
+      "This browser does not support the Web Crypto API required for POS devices.",
+    );
+  return window.crypto;
+}
+
+function publicKeyJwk(jwk: JsonWebKey): DevicePublicKeyJwk {
+  if (!jwk.x || !jwk.y)
+    throw new Error("The browser returned an invalid P-256 public key.");
+  return {
+    alg: "ES256",
+    crv: "P-256",
+    ext: true,
+    key_ops: ["verify"],
+    kty: "EC",
+    x: jwk.x,
+    y: jwk.y,
+  };
+}
+
+function canonicalJson(value: unknown): string {
+  if (value === null || ["boolean", "number", "string"].includes(typeof value))
+    return JSON.stringify(value);
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record)
+      .sort()
+      .map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`)
+      .join(",")}}`;
+  }
+  throw new Error("Device key contains a non-JSON value.");
+}
+
+export function canUseDeviceCrypto(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    window.isSecureContext &&
+    Boolean(window.crypto?.subtle)
+  );
+}
+
+export async function localDevice(
+  companyId: string,
+  branchId: string,
+): Promise<LocalPosDevice | undefined> {
+  return browserDatabase().devices.get(deviceId(companyId, branchId));
+}
+
+export async function prepareDeviceRegistration(input: {
+  companyId: string;
+  branchId: string;
+  displayName: string;
+}): Promise<LocalPosDevice> {
+  const crypto = browserCrypto();
+  const keys = await crypto.subtle.generateKey(
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["sign", "verify"],
+  );
+  if (
+    !(keys.privateKey instanceof CryptoKey) ||
+    !(keys.publicKey instanceof CryptoKey)
+  )
+    throw new Error(
+      "The browser did not generate a usable POS device key pair.",
+    );
+
+  const pending: LocalPosDevice = {
+    id: deviceId(input.companyId, input.branchId),
+    companyId: input.companyId,
+    branchId: input.branchId,
+    displayName: input.displayName,
+    publicKeyJwk: publicKeyJwk(
+      await crypto.subtle.exportKey("jwk", keys.publicKey),
+    ),
+    privateSigningKey: keys.privateKey,
+    registrationIdempotencyKey: crypto.randomUUID(),
+    state: "pending",
+    deviceId: null,
+    publicKeyFingerprint: null,
+    updatedAt: new Date().toISOString(),
+  };
+  await browserDatabase().devices.put(pending);
+  return pending;
+}
+
+export async function completeDeviceRegistration(
+  pending: LocalPosDevice,
+  response: Readonly<{
+    id: string;
+    publicKeyFingerprint: string;
+  }>,
+): Promise<LocalPosDevice> {
+  const registered: LocalPosDevice = {
+    ...pending,
+    state: "registered",
+    deviceId: response.id,
+    publicKeyFingerprint: response.publicKeyFingerprint,
+    updatedAt: new Date().toISOString(),
+  };
+  await browserDatabase().devices.put(registered);
+  return registered;
+}
+
+export async function publicKeyFingerprint(
+  publicKey: DevicePublicKeyJwk,
+): Promise<string> {
+  const bytes = new TextEncoder().encode(canonicalJson(publicKey));
+  const digest = await browserCrypto().subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)]
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+export async function signDevicePayload(
+  device: LocalPosDevice,
+  payload: Uint8Array,
+): Promise<ArrayBuffer> {
+  const signingBytes = new Uint8Array(payload.byteLength);
+  signingBytes.set(payload);
+  return browserCrypto().subtle.sign(
+    { name: "ECDSA", hash: "SHA-256" },
+    device.privateSigningKey,
+    signingBytes.buffer,
+  );
+}
