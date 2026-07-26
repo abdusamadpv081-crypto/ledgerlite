@@ -23,11 +23,11 @@ exists.
 
 ## E02 — Accounting core
 
-| Story                              | Status  | Evidence / blocker                                                |
-| ---------------------------------- | ------- | ----------------------------------------------------------------- |
-| US-010 Configure chart of accounts | Planned | Requires chart/account model and UAE starter chart.               |
-| US-011 Post a journal              | Planned | Requires journals, lines, invariant functions, and posting tests. |
-| US-012 Close a fiscal period       | Planned | Depends on fiscal periods and journal posting.                    |
+| Story                              | Status      | Evidence / blocker                                                                                                                                                                                                                                      |
+| ---------------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-010 Configure chart of accounts | In progress | Database chart/account model and invariant tests: `d1e1d61`; guarded UAE starter-chart/account API with RLS, idempotency, and audit integration evidence: `e421397`. Accountant-facing configuration UI and acceptance review remain.                   |
+| US-011 Post a journal              | In progress | Database-balanced/immutable posting function and tests: `d1e1d61`; guarded atomic manual-journal API with retry, line drill-down, and audit integration evidence: `af85f09`. Accountant journal workspace and acceptance review remain.                 |
+| US-012 Close a fiscal period       | In progress | Non-overlapping period model and protected database close function: `d1e1d61`, `b6f8154`; guarded period create/close API with concurrency, audit, and integration evidence: `6988fa8`. Accountant period-close workspace and acceptance review remain. |
 
 ## E03 — Product and inventory
 
@@ -39,14 +39,14 @@ exists.
 
 ## E04 — Offline POS
 
-| Story                                   | Status  | Evidence / blocker                                                                  |
-| --------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
-| US-030 Start shift                      | Planned | Depends on device, access, product/policy cache, and cash-shift model.              |
-| US-031 Complete offline sale            | Planned | Depends on Dexie outbox, checkout UI, prices, shifts, and local policy enforcement. |
-| US-035 Record external terminal payment | Planned | Depends on POS sale/payment model.                                                  |
-| US-032 Synchronize sale                 | Planned | Depends on idempotency, sync endpoint, inventory and journal posting.               |
-| US-033 Refund sale                      | Planned | Deferred beyond the first trust path.                                               |
-| US-034 Close shift                      | Planned | Depends on shifts and cash variance accounting.                                     |
+| Story                                   | Status  | Evidence / blocker                                                                                                                                                                                                         |
+| --------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| US-030 Start shift                      | Planned | Staff access is complete for the assisted pilot. Branch-scoped device registration/lifecycle API with key uniqueness and audit evidence: `1f51fc0`; still depends on device browser key path, cache, and cash-shift model. |
+| US-031 Complete offline sale            | Planned | Depends on Dexie outbox, checkout UI, prices, shifts, and local policy enforcement.                                                                                                                                        |
+| US-035 Record external terminal payment | Planned | Depends on POS sale/payment model.                                                                                                                                                                                         |
+| US-032 Synchronize sale                 | Planned | Depends on idempotency, sync endpoint, inventory and journal posting.                                                                                                                                                      |
+| US-033 Refund sale                      | Planned | Deferred beyond the first trust path.                                                                                                                                                                                      |
+| US-034 Close shift                      | Planned | Depends on shifts and cash variance accounting.                                                                                                                                                                            |
 
 ## E05 — UAE compliance and reporting
 

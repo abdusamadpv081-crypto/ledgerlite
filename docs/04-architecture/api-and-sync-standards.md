@@ -72,6 +72,25 @@ price replacement closes the preceding current price row and inserts a new
 effective-dated row; it never overwrites a price that may be needed by a
 historical sale or journal.
 
+## Device and accounting commands
+
+| Route                                                                     | Capability                                             | Purpose                                                                                    |
+| ------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `GET/POST /api/v1/companies/:companyId/branches/:branchId/devices`        | `pos.device.manage`                                    | List or register branch-scoped device public keys; the server derives the key fingerprint. |
+| `PATCH /api/v1/companies/:companyId/branches/:branchId/devices/:deviceId` | `pos.device.manage`                                    | Suspend, retire, or reinstate a device with optimistic concurrency.                        |
+| `GET /api/v1/companies/:companyId/accounting/chart`                       | `accounting.journal.read`                              | Read the active chart and accounts.                                                        |
+| `POST /api/v1/companies/:companyId/accounting/chart/starter`              | `accounting.chart.manage`                              | Create the UAE retail starter chart once.                                                  |
+| `POST /api/v1/companies/:companyId/accounting/chart/accounts`             | `accounting.chart.manage`                              | Add a tailored posting or parent account.                                                  |
+| `GET/POST /api/v1/companies/:companyId/accounting/journals`               | `accounting.journal.read/post`                         | Read posted journals or atomically post a balanced manual journal.                         |
+| `GET/POST /api/v1/companies/:companyId/accounting/periods`                | `accounting.journal.read` / `accounting.period.manage` | Read or create fiscal periods.                                                             |
+| `POST /api/v1/companies/:companyId/accounting/periods/:id/close`          | `accounting.period.manage`                             | Close an unchanged period only when it has no draft journals.                              |
+
+Journal posting and period closure are guarded again inside PostgreSQL. Only
+the security-definer posting function may transition a draft journal to
+immutable `posted`, and only the close function may change a fiscal-period
+lifecycle. Both require tenant context, emit command-correlated audit evidence,
+and preserve retries through the standard idempotency mechanism.
+
 ## POS sync endpoint contract
 
 **Proposed endpoint:** `POST /api/v1/pos/sync/events`
