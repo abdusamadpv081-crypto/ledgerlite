@@ -22,6 +22,33 @@ Every state-changing endpoint requires:
 
 Financial commands are processed inside a PostgreSQL transaction. A response is successful only after all required event, inventory, journal, and audit writes commit.
 
+## Company and branch administration
+
+The first production back-office routes are protected by the browser-session and
+route-scoped capability guards. Tenant and branch identifiers come exclusively
+from route parameters; they are never accepted from request bodies.
+
+| Route                                                   | Capability       | Purpose                                                                  |
+| ------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------ |
+| `GET /api/v1/companies/:companyId`                      | `company.read`   | Read the company profile.                                                |
+| `PATCH /api/v1/companies/:companyId`                    | `company.manage` | Change legal/configuration fields with optimistic concurrency.           |
+| `GET /api/v1/companies/:companyId/branches`             | `company.read`   | List the tenant's branches.                                              |
+| `POST /api/v1/companies/:companyId/branches`            | `branch.manage`  | Create a branch; only a company-wide owner can pass this unscoped route. |
+| `GET /api/v1/companies/:companyId/branches/:branchId`   | `branch.read`    | Read one permitted branch.                                               |
+| `PATCH /api/v1/companies/:companyId/branches/:branchId` | `branch.manage`  | Change a permitted branch.                                               |
+
+All `POST`/`PATCH` routes require an `Idempotency-Key` header (8–200 URL-safe
+characters). A key is scoped to company, actor, and command. Retrying the same
+payload returns the original response and correlation ID; reusing a key with a
+different payload returns `409 Conflict`. Updates also require the exact
+`expectedUpdatedAt` value from the immediately preceding read, preserving
+optimistic-concurrency protection at PostgreSQL microsecond precision.
+
+Each accepted change writes immutable audit evidence (`company.updated`,
+`branch.created`, or `branch.updated`) inside the same transaction. A branch
+cannot be closed by this general update route; closing will be a later
+controlled lifecycle command after device, shift, and stock safeguards exist.
+
 ## POS sync endpoint contract
 
 **Proposed endpoint:** `POST /api/v1/pos/sync/events`
