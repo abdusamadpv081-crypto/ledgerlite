@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Headers,
+  Inject,
   Param,
   Patch,
   Post,
@@ -74,7 +75,10 @@ function idempotency(value: unknown): string {
 @UseGuards(SessionAuthenticationGuard, ScopedCapabilityGuard)
 @RequireCapability("pos.device.manage")
 export class DeviceManagementController {
-  constructor(private readonly devices: DeviceManagementService) {}
+  constructor(
+    @Inject(DeviceManagementService)
+    private readonly devices: DeviceManagementService,
+  ) {}
 
   @Get()
   list(

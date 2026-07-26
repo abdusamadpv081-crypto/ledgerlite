@@ -108,7 +108,7 @@ function arrayBuffer(value: Uint8Array): ArrayBuffer {
 export class OfflineGrantService {
   constructor(
     @Inject(AUTHORIZATION_POOL) private readonly pool: Pool,
-    private readonly signer: OfflineGrantSigner,
+    @Inject(OfflineGrantSigner) private readonly signer: OfflineGrantSigner,
   ) {}
 
   verificationKey(): OfflineGrantVerificationKey {

@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Headers,
+  Inject,
   Param,
   Post,
   UseGuards,
@@ -52,7 +53,9 @@ function key(value: unknown): string {
 @UseGuards(SessionAuthenticationGuard, ScopedCapabilityGuard)
 @RequireCapability("pos.shift.operate")
 export class CashShiftController {
-  constructor(private readonly shifts: CashShiftService) {}
+  constructor(
+    @Inject(CashShiftService) private readonly shifts: CashShiftService,
+  ) {}
 
   @Get("current")
   current(

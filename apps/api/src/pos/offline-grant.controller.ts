@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Headers,
+  Inject,
   Param,
   Post,
   UseGuards,
@@ -54,7 +55,9 @@ function key(value: unknown): string {
 @UseGuards(SessionAuthenticationGuard, ScopedCapabilityGuard)
 @RequireCapability("pos.shift.operate")
 export class OfflineGrantController {
-  constructor(private readonly grants: OfflineGrantService) {}
+  constructor(
+    @Inject(OfflineGrantService) private readonly grants: OfflineGrantService,
+  ) {}
 
   @Post("challenges")
   challenge(
@@ -93,7 +96,9 @@ export class OfflineGrantController {
 @Controller("pos/offline-grants")
 @UseGuards(SessionAuthenticationGuard)
 export class OfflineGrantVerificationKeyController {
-  constructor(private readonly grants: OfflineGrantService) {}
+  constructor(
+    @Inject(OfflineGrantService) private readonly grants: OfflineGrantService,
+  ) {}
 
   @Get("verification-key")
   verificationKey() {

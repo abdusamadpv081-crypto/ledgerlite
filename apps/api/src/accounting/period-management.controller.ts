@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Headers,
+  Inject,
   Param,
   Post,
   UseGuards,
@@ -65,7 +66,10 @@ function idempotency(value: unknown): string {
 @Controller("companies/:companyId/accounting/periods")
 @UseGuards(SessionAuthenticationGuard, ScopedCapabilityGuard)
 export class PeriodManagementController {
-  constructor(private readonly periods: PeriodManagementService) {}
+  constructor(
+    @Inject(PeriodManagementService)
+    private readonly periods: PeriodManagementService,
+  ) {}
 
   @Get()
   @RequireCapability("accounting.journal.read")

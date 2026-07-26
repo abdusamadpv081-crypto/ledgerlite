@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Headers,
+  Inject,
   Param,
   Post,
   UseGuards,
@@ -51,7 +52,9 @@ function key(value: unknown): string {
 @UseGuards(SessionAuthenticationGuard, ScopedCapabilityGuard)
 @RequireCapability("pos.shift.operate")
 export class CashierPinController {
-  constructor(private readonly pins: CashierPinService) {}
+  constructor(
+    @Inject(CashierPinService) private readonly pins: CashierPinService,
+  ) {}
 
   @Post()
   set(

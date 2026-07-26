@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Inject,
   Post,
   Query,
   Req,
@@ -19,8 +20,9 @@ import { CompanyContextService } from "./company-context.service.js";
 @Controller("auth")
 export class AuthController {
   constructor(
-    private readonly oidcLogin: OidcLoginService,
-    private readonly sessions: SessionService,
+    @Inject(OidcLoginService) private readonly oidcLogin: OidcLoginService,
+    @Inject(SessionService) private readonly sessions: SessionService,
+    @Inject(CompanyContextService)
     private readonly companyContexts: CompanyContextService,
   ) {}
 

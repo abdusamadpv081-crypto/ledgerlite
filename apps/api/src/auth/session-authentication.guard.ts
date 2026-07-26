@@ -1,4 +1,5 @@
 import {
+  Inject,
   Injectable,
   UnauthorizedException,
   type CanActivate,
@@ -10,7 +11,9 @@ import { SESSION_COOKIE_NAME } from "./session-cookie.js";
 
 @Injectable()
 export class SessionAuthenticationGuard implements CanActivate {
-  constructor(private readonly sessions: SessionService) {}
+  constructor(
+    @Inject(SessionService) private readonly sessions: SessionService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>();

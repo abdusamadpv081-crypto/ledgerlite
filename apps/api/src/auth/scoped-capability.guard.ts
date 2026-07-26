@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   UnauthorizedException,
   type CanActivate,
@@ -34,7 +35,8 @@ function routeIdentifier(
 @Injectable()
 export class ScopedCapabilityGuard implements CanActivate {
   constructor(
-    private readonly reflector: Reflector,
+    @Inject(Reflector) private readonly reflector: Reflector,
+    @Inject(AuthorizationService)
     private readonly authorization: AuthorizationService,
   ) {}
 

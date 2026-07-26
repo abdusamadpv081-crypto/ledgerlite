@@ -68,7 +68,7 @@ function normalizeReturnTo(returnTo: string | undefined): string {
 export class OidcLoginService {
   constructor(
     @Inject(AUTHORIZATION_POOL) private readonly pool: Pool,
-    private readonly sessions: SessionService,
+    @Inject(SessionService) private readonly sessions: SessionService,
     @Inject(OIDC_PROVIDER) private readonly provider: OidcProvider,
     @Inject(OIDC_TRANSACTION_CIPHER)
     private readonly transactionCipher: OidcTransactionCipher | undefined,

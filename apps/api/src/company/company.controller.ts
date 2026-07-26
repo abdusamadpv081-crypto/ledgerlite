@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Headers,
+  Inject,
   Param,
   Patch,
   Post,
@@ -151,7 +152,10 @@ function parseIdempotencyKey(value: unknown): string {
 @Controller("companies")
 @UseGuards(SessionAuthenticationGuard, ScopedCapabilityGuard)
 export class CompanyController {
-  constructor(private readonly companies: CompanyBranchService) {}
+  constructor(
+    @Inject(CompanyBranchService)
+    private readonly companies: CompanyBranchService,
+  ) {}
   @Get(":companyId")
   @RequireCapability("company.read")
   getCompany(

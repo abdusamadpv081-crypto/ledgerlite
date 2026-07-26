@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Headers,
+  Inject,
   Param,
   Patch,
   Post,
@@ -118,7 +119,10 @@ function idempotency(value: unknown): string {
 @UseGuards(SessionAuthenticationGuard, ScopedCapabilityGuard)
 @RequireCapability("catalog.manage")
 export class CatalogManagementController {
-  constructor(private readonly catalogue: CatalogManagementService) {}
+  constructor(
+    @Inject(CatalogManagementService)
+    private readonly catalogue: CatalogManagementService,
+  ) {}
   @Get()
   list(
     @Param("companyId") companyId: string,
