@@ -41,6 +41,8 @@ import { OfflineGrantService } from "../pos/offline-grant.service.js";
 import { OfflineGrantSigner } from "../pos/offline-grant-signer.js";
 import { CashierPinController } from "../pos/cashier-pin.controller.js";
 import { CashierPinService } from "../pos/cashier-pin.service.js";
+import { CashShiftController } from "../pos/cash-shift.controller.js";
+import { CashShiftService } from "../pos/cash-shift.service.js";
 
 @Module({
   controllers:
@@ -56,6 +58,7 @@ import { CashierPinService } from "../pos/cashier-pin.service.js";
           OfflineGrantController,
           OfflineGrantVerificationKeyController,
           CashierPinController,
+          CashShiftController,
           CatalogManagementController,
           CatalogController,
         ]
@@ -70,6 +73,7 @@ import { CashierPinService } from "../pos/cashier-pin.service.js";
           OfflineGrantController,
           OfflineGrantVerificationKeyController,
           CashierPinController,
+          CashShiftController,
           CatalogManagementController,
         ],
   providers: [
@@ -105,6 +109,7 @@ import { CashierPinService } from "../pos/cashier-pin.service.js";
     OfflineGrantSigner,
     OfflineGrantService,
     CashierPinService,
+    CashShiftService,
     CompanyContextService,
     SessionService,
     OidcLoginService,
