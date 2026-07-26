@@ -33,6 +33,12 @@ import { JournalManagementController } from "../accounting/journal-management.co
 import { JournalManagementService } from "../accounting/journal-management.service.js";
 import { PeriodManagementController } from "../accounting/period-management.controller.js";
 import { PeriodManagementService } from "../accounting/period-management.service.js";
+import {
+  OfflineGrantController,
+  OfflineGrantVerificationKeyController,
+} from "../pos/offline-grant.controller.js";
+import { OfflineGrantService } from "../pos/offline-grant.service.js";
+import { OfflineGrantSigner } from "../pos/offline-grant-signer.js";
 
 @Module({
   controllers:
@@ -45,6 +51,8 @@ import { PeriodManagementService } from "../accounting/period-management.service
           JournalManagementController,
           PeriodManagementController,
           DeviceManagementController,
+          OfflineGrantController,
+          OfflineGrantVerificationKeyController,
           CatalogManagementController,
           CatalogController,
         ]
@@ -56,6 +64,8 @@ import { PeriodManagementService } from "../accounting/period-management.service
           JournalManagementController,
           PeriodManagementController,
           DeviceManagementController,
+          OfflineGrantController,
+          OfflineGrantVerificationKeyController,
           CatalogManagementController,
         ],
   providers: [
@@ -88,6 +98,8 @@ import { PeriodManagementService } from "../accounting/period-management.service
     ChartManagementService,
     JournalManagementService,
     PeriodManagementService,
+    OfflineGrantSigner,
+    OfflineGrantService,
     CompanyContextService,
     SessionService,
     OidcLoginService,
