@@ -474,6 +474,183 @@ summary {
 .table-wrap {
   overflow: auto;
 }
+.pos-checkout {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-8);
+}
+.pos-checkout-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  align-items: end;
+}
+.pos-checkout-heading h2,
+.pos-checkout-heading p {
+  margin: 0;
+}
+.pos-checkout-heading > div > p:not(.eyebrow) {
+  max-width: 42rem;
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+.pos-sync-state,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.pos-sync-state {
+  padding: 0.5rem 0.7rem;
+  background: #fef3c7;
+  color: #92400e;
+  white-space: nowrap;
+}
+.pos-checkout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(20rem, 0.65fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+.pos-products-panel,
+.pos-cart-panel {
+  min-height: 100%;
+}
+.pos-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+  gap: var(--space-3);
+}
+.pos-product-button {
+  min-height: 7.5rem;
+  padding: var(--space-4);
+  flex-direction: column;
+  align-items: start;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  text-align: start;
+}
+.pos-product-button:hover {
+  border-color: var(--color-action-primary);
+  background: #eff6ff;
+}
+.pos-product-button small,
+.pos-cart-lines small,
+.pos-cart-total small,
+.pos-outbox-list small {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+.pos-product-button strong {
+  color: var(--color-action-primary);
+  font-variant-numeric: tabular-nums;
+}
+.pos-cart-panel {
+  position: sticky;
+  top: var(--space-4);
+}
+.pos-cart-panel h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+}
+.pos-cart-count {
+  display: grid;
+  min-width: 1.75rem;
+  min-height: 1.75rem;
+  place-items: center;
+  border-radius: 999px;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.empty-cart {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+.pos-cart-lines,
+.pos-outbox-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pos-cart-lines li,
+.pos-outbox-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  align-items: center;
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--color-border);
+}
+.pos-cart-lines li > div:first-child,
+.pos-outbox-list li > div:first-child {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+.pos-quantity-control {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.pos-quantity-control .icon-button {
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+}
+.pos-quantity-control output {
+  min-width: 2rem;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.pos-cart-total {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 2px solid var(--color-border);
+  font-variant-numeric: tabular-nums;
+}
+.pos-cart-total strong {
+  font-size: 1.5rem;
+}
+.pos-complete-sale {
+  width: 100%;
+  margin-top: var(--space-4);
+}
+.pos-outbox-panel {
+  margin-top: var(--space-4);
+}
+.pos-outbox-list li > div:last-child {
+  display: grid;
+  justify-items: end;
+  gap: 0.35rem;
+}
+.status-badge {
+  padding: 0.25rem 0.5rem;
+}
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+.pos-outbox-list code {
+  max-width: 18rem;
+  color: var(--color-text-muted);
+  text-align: end;
+}
 table {
   width: 100%;
   border-collapse: collapse;
@@ -537,6 +714,13 @@ td small {
   }
   .device-scope-selectors .company-select select {
     min-width: 0;
+  }
+  .pos-checkout-heading,
+  .pos-checkout-grid {
+    display: grid;
+  }
+  .pos-cart-panel {
+    position: static;
   }
   .journal-line-labels {
     display: none;
