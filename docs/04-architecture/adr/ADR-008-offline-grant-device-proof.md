@@ -43,6 +43,20 @@ key before it issues a grant.
    `pos.sale.create`. Offline refunds, discounts, PIN unlock, shift lifecycle,
    and sale synchronization each require their own guarded implementation.
 
+## Implemented boundary
+
+- An authenticated browser retrieves the active verification JWK from
+  `GET /api/v1/pos/offline-grants/verification-key` while online.
+- A branch-scoped cashier or manager calls the guarded challenge endpoint,
+  signs the versioned `{challengeId, nonce}` envelope using the non-extractable
+  registered device key, then submits the proof to the guarded issue endpoint.
+- The API checks device status, company/branch scope, cashier identity,
+  challenge expiry and one-time consumption, and the raw P-256 ECDSA proof
+  before signing the compact grant. The PostgreSQL tables enforce immutable
+  challenge consumption and grant revocation transitions under forced RLS.
+- Integration tests use fresh ephemeral keys and verify the returned ES256
+  signature independently using the published JWK.
+
 ## Consequences
 
 - A compromised browser session cannot mint a usable grant for a device without
