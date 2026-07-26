@@ -324,10 +324,9 @@ select:disabled {
 .journal-line-labels,
 .journal-line {
   display: grid;
-  grid-template-columns: minmax(9rem, 1.35fr) minmax(6rem, 0.7fr) minmax(
-      6rem,
-      0.7fr
-    ) minmax(8rem, 1fr) 2.75rem;
+  grid-template-columns:
+    minmax(9rem, 1.35fr) minmax(6rem, 0.7fr) minmax(6rem, 0.7fr)
+    minmax(8rem, 1fr) 2.75rem;
   gap: var(--space-2);
   align-items: end;
 }
