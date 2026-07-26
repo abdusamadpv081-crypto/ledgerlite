@@ -11,6 +11,7 @@
     "migrate": "node scripts/migrate.mjs",
     "migrate:baseline": "node scripts/migrate.mjs --baseline",
     "provision:pilot-owner": "node scripts/provision-pilot-owner.mjs",
+    "provision:pilot-staff": "node scripts/provision-pilot-staff.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
