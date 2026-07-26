@@ -15,10 +15,10 @@ guess the merchant's commercial intent from a tax rate or receipt layout.
 
 Each `catalog.price_list` stores a `tax_treatment` setting:
 
-| Value | Meaning |
-| --- | --- |
+| Value       | Meaning                                                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------ |
 | `inclusive` | The configured unit price is the customer-facing total before discounts; tax is derived from it. |
-| `exclusive` | The configured unit price is net of tax; tax is added to derive the customer total. |
+| `exclusive` | The configured unit price is net of tax; tax is added to derive the customer total.              |
 
 The default is `inclusive`, matching the initial UAE general-retail pilot. The
 setting is explicit on the price list so a future wholesale/B2B list can use
