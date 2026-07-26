@@ -19,6 +19,8 @@ import type { AuthenticatedActor } from "../auth/session.service.js";
 import {
   CatalogManagementService,
   type CreateProduct,
+  type CreateBarcode,
+  type BranchAvailability,
   type CreateTaxCode,
 } from "./catalog-management.service.js";
 
@@ -49,6 +51,15 @@ const product = z
     defaultTaxCodeId: id.optional(),
     unitPrice: decimal,
     priceListName: text(120).optional().default("Default retail"),
+  })
+  .strict();
+const barcode = z
+  .object({ barcode: text(128), symbology: text(32).optional() })
+  .strict();
+const availability = z
+  .object({
+    isSellable: z.boolean(),
+    reorderPoint: z.union([decimal, z.null()]).optional(),
   })
   .strict();
 function parse<T>(schema: z.ZodType<T>, value: unknown): T {
@@ -102,6 +113,38 @@ export class CatalogManagementController {
     return this.catalogue.createProduct(
       { companyId: parse(id, companyId), actorUserId: actor.userId },
       parse(product, body) as CreateProduct,
+      idempotency(header),
+    );
+  }
+  @Post("products/:productId/barcodes")
+  createBarcode(
+    @Param("companyId") companyId: string,
+    @Param("productId") productId: string,
+    @Body() body: unknown,
+    @Headers("idempotency-key") header: unknown,
+    @CurrentActor() actor: AuthenticatedActor,
+  ) {
+    return this.catalogue.createBarcode(
+      { companyId: parse(id, companyId), actorUserId: actor.userId },
+      parse(id, productId),
+      parse(barcode, body) as CreateBarcode,
+      idempotency(header),
+    );
+  }
+  @Post("branches/:branchId/products/:productId/availability")
+  setBranchAvailability(
+    @Param("companyId") companyId: string,
+    @Param("branchId") branchId: string,
+    @Param("productId") productId: string,
+    @Body() body: unknown,
+    @Headers("idempotency-key") header: unknown,
+    @CurrentActor() actor: AuthenticatedActor,
+  ) {
+    return this.catalogue.setBranchAvailability(
+      { companyId: parse(id, companyId), actorUserId: actor.userId },
+      parse(id, branchId),
+      parse(id, productId),
+      parse(availability, body) as BranchAvailability,
       idempotency(header),
     );
   }

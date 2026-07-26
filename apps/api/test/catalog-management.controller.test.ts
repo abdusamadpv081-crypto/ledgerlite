@@ -20,6 +20,14 @@ describe("CatalogManagementController", () => {
         calls.push(args);
         return { accepted: true };
       },
+      createBarcode: (...args: unknown[]) => {
+        calls.push(args);
+        return { accepted: true };
+      },
+      setBranchAvailability: (...args: unknown[]) => {
+        calls.push(args);
+        return { accepted: true };
+      },
     } as unknown as CatalogManagementService);
 
     controller.createTax(
@@ -34,12 +42,40 @@ describe("CatalogManagementController", () => {
       "product-create-1",
       actor,
     );
+    controller.createBarcode(
+      companyId,
+      "d556b3b8-fdbc-4ea6-9c0b-531dd8e704ed",
+      { barcode: "629100000001" },
+      "barcode-create-1",
+      actor,
+    );
+    controller.setBranchAvailability(
+      companyId,
+      "d556b3b8-fdbc-4ea6-9c0b-531dd8e704ed",
+      "f0fd3509-4724-4b95-86c8-d2a4a6f0a204",
+      { isSellable: false, reorderPoint: "4" },
+      "availability-set-1",
+      actor,
+    );
 
     expect(calls).toEqual([
       [
         { companyId, actorUserId: actor.userId },
         { code: "VAT5", name: "VAT 5%", rate: "0.05" },
         "tax-create-1",
+      ],
+      [
+        { companyId, actorUserId: actor.userId },
+        "d556b3b8-fdbc-4ea6-9c0b-531dd8e704ed",
+        { barcode: "629100000001" },
+        "barcode-create-1",
+      ],
+      [
+        { companyId, actorUserId: actor.userId },
+        "d556b3b8-fdbc-4ea6-9c0b-531dd8e704ed",
+        "f0fd3509-4724-4b95-86c8-d2a4a6f0a204",
+        { isSellable: false, reorderPoint: "4" },
+        "availability-set-1",
       ],
       [
         { companyId, actorUserId: actor.userId },

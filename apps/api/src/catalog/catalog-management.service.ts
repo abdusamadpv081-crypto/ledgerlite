@@ -45,6 +45,14 @@ export type CreateProduct = Readonly<{
   unitPrice: string;
   priceListName: string;
 }>;
+export type CreateBarcode = Readonly<{
+  barcode: string;
+  symbology?: string;
+}>;
+export type BranchAvailability = Readonly<{
+  isSellable: boolean;
+  reorderPoint?: string | null;
+}>;
 type CommandResponse<T> = Readonly<{ data: T; correlationId: string }>;
 type IdempotencyRow = Readonly<{
   is_new: boolean;
@@ -221,6 +229,102 @@ export class CatalogManagementService {
             priceListName: input.priceListName,
             productKind: input.productKind,
           },
+        );
+        return { data, correlationId };
+      },
+    );
+  }
+
+  async createBarcode(
+    context: Context,
+    productId: string,
+    input: CreateBarcode,
+    key: string,
+  ): Promise<CommandResponse<{ id: string; barcode: string }>> {
+    return this.command(
+      context,
+      "catalog.product-barcode.create",
+      key,
+      input,
+      async (client, correlationId) => {
+        const product = await client.query(
+          "SELECT id FROM catalog.product WHERE id = $1",
+          [productId],
+        );
+        if (product.rowCount !== 1)
+          throw new NotFoundException("Product was not found.");
+        const result = await client.query<{ id: string; barcode: string }>(
+          "INSERT INTO catalog.product_barcode (company_id, product_id, barcode, symbology) VALUES ($1, $2, $3, $4) RETURNING id, barcode",
+          [
+            context.companyId,
+            productId,
+            input.barcode,
+            input.symbology ?? null,
+          ],
+        );
+        await this.audit(
+          client,
+          context.companyId,
+          "catalog.product_barcode.created",
+          "catalog.product_barcode",
+          result.rows[0].id,
+          { productId },
+        );
+        return { data: result.rows[0], correlationId };
+      },
+    );
+  }
+
+  async setBranchAvailability(
+    context: Context,
+    branchId: string,
+    productId: string,
+    input: BranchAvailability,
+    key: string,
+  ): Promise<CommandResponse<BranchAvailability>> {
+    return this.command(
+      context,
+      "catalog.product-branch.set",
+      key,
+      input,
+      async (client, correlationId) => {
+        const product = await client.query(
+          "SELECT id FROM catalog.product WHERE id = $1",
+          [productId],
+        );
+        const branch = await client.query(
+          "SELECT id FROM platform.branch WHERE id = $1",
+          [branchId],
+        );
+        if (product.rowCount !== 1 || branch.rowCount !== 1)
+          throw new NotFoundException("Product or branch was not found.");
+        const result = await client.query<{
+          is_sellable: boolean;
+          reorder_point: string | null;
+        }>(
+          `INSERT INTO catalog.product_branch (company_id, product_id, branch_id, is_sellable, reorder_point)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (product_id, branch_id) DO UPDATE SET is_sellable = EXCLUDED.is_sellable, reorder_point = EXCLUDED.reorder_point
+         RETURNING is_sellable, reorder_point::text`,
+          [
+            context.companyId,
+            productId,
+            branchId,
+            input.isSellable,
+            input.reorderPoint ?? null,
+          ],
+        );
+        const data = {
+          isSellable: result.rows[0].is_sellable,
+          reorderPoint: result.rows[0].reorder_point,
+        };
+        await this.audit(
+          client,
+          context.companyId,
+          "catalog.product_branch.updated",
+          "catalog.product_branch",
+          productId,
+          { branchId },
         );
         return { data, correlationId };
       },
