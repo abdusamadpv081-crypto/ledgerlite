@@ -176,4 +176,33 @@ describe("AuthController", () => {
       },
     ]);
   });
+
+  it("lists only branches explicitly assigned to the active actor", async () => {
+    const controller = new AuthController(
+      {} as OidcLoginService,
+      {} as SessionService,
+      {
+        listBranchesForActor: async (userId: string) => {
+          expect(userId).toBe("user-id");
+          return [
+            {
+              companyId: "company-id",
+              branchId: "branch-id",
+              code: "MAIN",
+              name: "Main branch",
+            },
+          ];
+        },
+      } as CompanyContextService,
+    );
+
+    await expect(controller.branches({ userId: "user-id" })).resolves.toEqual([
+      {
+        companyId: "company-id",
+        branchId: "branch-id",
+        code: "MAIN",
+        name: "Main branch",
+      },
+    ]);
+  });
 });

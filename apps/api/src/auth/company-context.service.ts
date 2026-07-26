@@ -9,6 +9,12 @@ export type ActiveCompanyContext = Readonly<{
   status: "active";
   roles: readonly string[];
 }>;
+export type ActiveBranchContext = Readonly<{
+  companyId: string;
+  branchId: string;
+  code: string;
+  name: string;
+}>;
 
 @Injectable()
 export class CompanyContextService {
@@ -31,6 +37,25 @@ export class CompanyContextService {
         tradeName: row.trade_name,
         status: row.company_status,
         roles: row.roles,
+      }));
+    });
+  }
+
+  async listBranchesForActor(
+    actorUserId: string,
+  ): Promise<readonly ActiveBranchContext[]> {
+    return this.withActor(actorUserId, async (client) => {
+      const result = await client.query<{
+        company_id: string;
+        branch_id: string;
+        branch_code: string;
+        branch_name: string;
+      }>("SELECT * FROM platform.list_active_branch_contexts()");
+      return result.rows.map((row) => ({
+        companyId: row.company_id,
+        branchId: row.branch_id,
+        code: row.branch_code,
+        name: row.branch_name,
       }));
     });
   }

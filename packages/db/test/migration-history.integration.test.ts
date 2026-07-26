@@ -40,6 +40,8 @@ describe("database migration ledger", () => {
       "000017_accounting_core.sql",
       "000018_fix_manual_journal_source_uniqueness.sql",
       "000019_protect_fiscal_period_closure.sql",
+      "000020_active_branch_contexts.sql",
+      "000021_grant_branch_context_reader.sql",
     ]);
     expect(
       result.rows.every((row) => /^[a-f0-9]{64}$/.test(row.checksum)),

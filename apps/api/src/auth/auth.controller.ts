@@ -36,6 +36,12 @@ export class AuthController {
     return this.companyContexts.listForActor(actor.userId);
   }
 
+  @Get("branches")
+  @UseGuards(SessionAuthenticationGuard)
+  branches(@CurrentActor() actor: AuthenticatedActor) {
+    return this.companyContexts.listBranchesForActor(actor.userId);
+  }
+
   @Get("login")
   async login(
     @Query("returnTo") returnTo: string | undefined,
