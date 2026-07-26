@@ -57,6 +57,13 @@ Functions that create postings use `SECURITY INVOKER` by default and validate te
 | Open-shift unique partial index                | One active shift per device, e.g. `WHERE status = 'open'`.                                                 |
 | Source-event unique index                      | Prevents duplicate system posting for a sync event.                                                        |
 | Audit trigger/use-case call                    | Logs privileged configuration/role/device actions and financial corrections.                               |
+| Cashier-PIN version guard                      | Allows only a new salt/hash and the next monotonically increasing PIN verifier version.                    |
+
+`pos.cashier_pin` has forced RLS. The runtime role can access only the row
+whose company and cashier user match its transaction-local tenant and actor;
+there is no broad PIN-verifier read API. The server writes a salted Argon2id
+result and audit metadata only. The browser-local PBKDF2 verifier, raw PIN,
+and failed-attempt state do not enter PostgreSQL.
 
 ## POS sale acceptance procedure
 
