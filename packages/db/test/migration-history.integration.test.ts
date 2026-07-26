@@ -37,6 +37,7 @@ describe("database migration ledger", () => {
       "000014_price_list_tax_treatment.sql",
       "000015_active_company_contexts.sql",
       "000016_operator_staff_access_provisioning.sql",
+      "000017_accounting_core.sql",
     ]);
     expect(
       result.rows.every((row) => /^[a-f0-9]{64}$/.test(row.checksum)),
