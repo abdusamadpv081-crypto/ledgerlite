@@ -29,6 +29,8 @@ import { DeviceManagementController } from "../device/device-management.controll
 import { DeviceManagementService } from "../device/device-management.service.js";
 import { ChartManagementController } from "../accounting/chart-management.controller.js";
 import { ChartManagementService } from "../accounting/chart-management.service.js";
+import { JournalManagementController } from "../accounting/journal-management.controller.js";
+import { JournalManagementService } from "../accounting/journal-management.service.js";
 
 @Module({
   controllers:
@@ -38,6 +40,7 @@ import { ChartManagementService } from "../accounting/chart-management.service.j
           AuthController,
           CompanyController,
           ChartManagementController,
+          JournalManagementController,
           DeviceManagementController,
           CatalogManagementController,
           CatalogController,
@@ -47,6 +50,7 @@ import { ChartManagementService } from "../accounting/chart-management.service.j
           AuthController,
           CompanyController,
           ChartManagementController,
+          JournalManagementController,
           DeviceManagementController,
           CatalogManagementController,
         ],
@@ -78,6 +82,7 @@ import { ChartManagementService } from "../accounting/chart-management.service.j
     CatalogManagementService,
     DeviceManagementService,
     ChartManagementService,
+    JournalManagementService,
     CompanyContextService,
     SessionService,
     OidcLoginService,
