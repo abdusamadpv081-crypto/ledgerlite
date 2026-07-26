@@ -1,11 +1,11 @@
 # Browser offline-authority acceptance
 
-**Scope:** device-proof authority cache supporting US-030  
+**Scope:** device-proof authority cache that is a prerequisite for US-030
 **Route:** `/pos`  
 **Required role:** branch manager or cashier explicitly assigned to the branch
 
 This script validates the online preparation step for offline POS. It does
-**not** yet unlock a cashier, open a shift, or permit a sale.
+**not** yet permit checkout or a sale.
 
 ## Preconditions
 
@@ -37,8 +37,8 @@ This script validates the online preparation step for offline POS. It does
    to `/devices` with an authorized owner/manager to register the browser.
 3. Choose **Refresh offline authority** while online.
 4. Verify the screen displays **Ready**, an expiry in Dubai time, a grant ID,
-   and a policy version. The screen must state that cashier unlock and a cash
-   shift are still required before sales.
+   and a policy version. The screen must state the remaining prerequisites for
+   sales when the PIN or cash shift is not yet ready.
 5. Reload `/pos` while still online. Verify the same valid authority is read
    from local storage and its expiry is displayed. The token must be verified
    again before the UI treats it as ready.

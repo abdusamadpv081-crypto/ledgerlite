@@ -14,6 +14,8 @@
 | [Story tracker](06-delivery/story-tracker.md)                               | MVP story status, completed enablers, acceptance evidence, and blockers.   |
 | [Pilot provisioning](06-delivery/assisted-pilot-provisioning.md)            | Secure assisted setup of the first pilot company owner and branch.         |
 | [Offline authority acceptance](06-delivery/offline-authority-acceptance.md) | Manual test script for browser-bound encrypted POS authority.              |
+| [Cash-shift acceptance](06-delivery/cash-shift-opening-acceptance.md)       | Manual test script for an auditable cashier opening float.                 |
+| [Cash-shift acceptance](06-delivery/cash-shift-opening-acceptance.md)       | Manual test script for an auditable cashier opening float.                 |
 | [Repository review](06-delivery/repository-review-2026-07-25.md)            | Review evidence, resolved findings, and remediation order.                 |
 
 ## Working agreement
