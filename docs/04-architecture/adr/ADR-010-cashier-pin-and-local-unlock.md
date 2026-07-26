@@ -17,11 +17,11 @@ token.
 Ledger Lite will use separate server and browser verifiers, each constrained
 to its purpose.
 
-1. A cashier PIN is 8–12 numeric digits, distinct from the OIDC password. The
-   initial policy defaults are 8-digit minimum, five failed offline attempts,
-   15-minute cool-off, and 12-hour maximum local session. These values will be
-   stored in versioned company/branch POS policy rather than hard-coded UI
-   behavior.
+1. A cashier PIN is numeric and distinct from the OIDC password. The initial
+   policy range is 8–12 digits, with an 8-digit minimum, five failed offline
+   attempts, 15-minute cool-off, and 12-hour maximum local session. The
+   configurable policy allows up to 16 digits. These values live in versioned
+   company/branch POS policy rather than hard-coded UI behavior.
 2. The API receives a PIN only over the authenticated HTTPS session and never
    returns or logs it. It stores a unique random salt plus a 32-byte Argon2id
    result using Node's built-in `crypto.argon2`, with 64 MiB memory, three
@@ -70,6 +70,19 @@ and [OWASP PBKDF2 guidance](https://cheatsheetseries.owasp.org/cheatsheets/Passw
 - The runtime must use a Node version that supports `crypto.argon2`; the
   project development runtime currently does. Deployment images must enforce
   this as a startup prerequisite before the PIN endpoint is enabled.
+
+## Implemented foundation
+
+- `pos.cashier_pin` stores a self-only, forced-RLS Argon2id verifier and
+  permits only a replacement with the next version. Its policy defaults live
+  on `platform.policy_version`.
+- `POST /api/v1/companies/:companyId/branches/:branchId/pos/pin` requires an
+  authenticated cashier/branch-manager capability and registered device. The
+  API uses a random salt, the environment-only pepper, HMAC-protected command
+  idempotency, and correlated audit metadata without retaining PIN text.
+- The `/pos` workspace uses Web Crypto PBKDF2 to produce an encrypted,
+  device/cashier-bound local verifier. It persists failure/cool-off state and
+  returns only an in-memory unlock expiry bounded by the cached authority.
 
 ## Deferred
 

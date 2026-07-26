@@ -24,6 +24,7 @@ This script validates the online preparation step for offline POS. It does
    ```powershell
    $env:POS_OFFLINE_GRANT_SIGNING_PRIVATE_JWK = node -e "const { webcrypto } = require('node:crypto'); (async () => { const keys = await webcrypto.subtle.generateKey({ name: 'ECDSA', namedCurve: 'P-256' }, true, ['sign', 'verify']); console.log(JSON.stringify(await webcrypto.subtle.exportKey('jwk', keys.privateKey))); })();"
    $env:POS_OFFLINE_GRANT_SIGNING_KEY_ID = 'local-offline-grant-20260726'
+   $env:POS_PIN_PEPPER = node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"
    ```
 
    Never commit the generated value or reuse a development key for a pilot.
@@ -45,6 +46,24 @@ This script validates the online preparation step for offline POS. It does
    database. `offlineAuthorities` and `offlineAuthorityAttempts` may expose
    routing/expiry metadata but must not expose a plaintext JWS token, nonce,
    or device signature. Those payloads are AES-GCM ciphertext.
+
+## Cashier PIN and local unlock
+
+1. With a valid cached authority, enter and confirm a numeric PIN within the
+   current policy range (8–12 digits by default) in the **Cashier PIN**
+   section, then choose **Set cashier PIN**.
+2. Verify the screen states that an encrypted local verifier is ready. No raw
+   PIN, server Argon2id hash, OIDC session, or authority token may appear in
+   `ledgerlite-pos` IndexedDB.
+3. Enter an incorrect PIN once. Verify the remaining-attempt count decreases.
+   On the configured fifth failed attempt, verify local unlock is blocked for
+   the configured 15-minute cool-off period.
+4. After the cool-off, enter the correct PIN. Verify the screen reports a
+   bounded local unlock expiry no later than the authority expiry. Refreshing
+   the page clears this memory-only unlock and requires PIN entry again.
+5. While the `/pos` page remains open, disable network in browser developer
+   tools and verify the cached correct PIN can still unlock locally. It must
+   continue to state that a cash shift is required before any sale.
 
 ## Retry and lifecycle expectations
 

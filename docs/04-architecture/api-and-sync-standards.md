@@ -83,6 +83,7 @@ historical sale or journal.
 | `GET /api/v1/pos/offline-grants/verification-key`                                    | authenticated session                                  | Download the current ES256 verification JWK while online for offline grant verification.   |
 | `POST /api/v1/companies/:companyId/branches/:branchId/pos/offline-grants/challenges` | `pos.shift.operate`                                    | Create a five-minute, one-use device-proof challenge.                                      |
 | `POST /api/v1/companies/:companyId/branches/:branchId/pos/offline-grants`            | `pos.shift.operate`                                    | Verify the registered device signature and issue a policy-bounded operational grant.       |
+| `POST /api/v1/companies/:companyId/branches/:branchId/pos/pin`                       | `pos.shift.operate`                                    | Set/reset the caller's server Argon2id PIN verifier for a registered device.               |
 | `GET /api/v1/companies/:companyId/accounting/chart`                                  | `accounting.journal.read`                              | Read the active chart and accounts.                                                        |
 | `POST /api/v1/companies/:companyId/accounting/chart/starter`                         | `accounting.chart.manage`                              | Create the UAE retail starter chart once.                                                  |
 | `POST /api/v1/companies/:companyId/accounting/chart/accounts`                        | `accounting.chart.manage`                              | Add a tailored posting or parent account.                                                  |
@@ -103,6 +104,14 @@ keys. Grant issuance requires `POS_OFFLINE_GRANT_SIGNING_PRIVATE_JWK` and
 `POS_OFFLINE_GRANT_SIGNING_KEY_ID` in deployment secret storage. The server
 stores a SHA-256 token digest and grant metadata, never the browser's private
 key, browser session, OIDC token, or raw POS PIN.
+
+The cashier-PIN command accepts a numeric value within the current policy range
+(8–12 digits by default, with an allowed maximum of 16) over the authenticated
+HTTPS session. It requires a registered device and `pos.shift.operate`, hashes
+the value with a per-user salt plus environment-managed pepper, writes no raw
+PIN or fast PIN digest to idempotency/audit storage, and returns only the
+versioned local-unlock policy. The browser derives and encrypts its separate
+local verifier after the command succeeds.
 
 ## POS sync endpoint contract
 
