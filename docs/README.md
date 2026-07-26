@@ -15,7 +15,7 @@
 | [Pilot provisioning](06-delivery/assisted-pilot-provisioning.md)            | Secure assisted setup of the first pilot company owner and branch.         |
 | [Offline authority acceptance](06-delivery/offline-authority-acceptance.md) | Manual test script for browser-bound encrypted POS authority.              |
 | [Cash-shift acceptance](06-delivery/cash-shift-opening-acceptance.md)       | Manual test script for an auditable cashier opening float.                 |
-| [Cash-shift acceptance](06-delivery/cash-shift-opening-acceptance.md)       | Manual test script for an auditable cashier opening float.                 |
+| [Manual tester guide](06-delivery/manual-tester-guide.md)                   | Current feature coverage, setup, exploratory tests, and boundaries.        |
 | [Repository review](06-delivery/repository-review-2026-07-25.md)            | Review evidence, resolved findings, and remediation order.                 |
 
 ## Working agreement
