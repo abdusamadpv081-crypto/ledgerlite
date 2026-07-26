@@ -88,6 +88,51 @@ afterAll(async () => {
 });
 
 describe("CatalogManagementService", () => {
+  it("returns only active products explicitly enabled for the POS branch", async () => {
+    const context = { companyId, actorUserId };
+    const sellable = await catalogue.createProduct(
+      context,
+      {
+        name: "POS catalogue product",
+        productKind: "stock",
+        unitPrice: "9.50",
+        priceListName: "Default retail",
+      },
+      `pos-catalogue-sellable-${suffix}`,
+    );
+    const unavailable = await catalogue.createProduct(
+      context,
+      {
+        name: "Back-office only product",
+        productKind: "stock",
+        unitPrice: "7.00",
+        priceListName: "Default retail",
+      },
+      `pos-catalogue-unavailable-${suffix}`,
+    );
+    await catalogue.setBranchAvailability(
+      context,
+      branchId,
+      sellable.data.id,
+      { isSellable: true },
+      `pos-catalogue-availability-${suffix}`,
+    );
+
+    const result = await catalogue.listPosCatalogue({ ...context, branchId });
+
+    expect(result.refreshedAt).toBeTruthy();
+    expect(result.products).toEqual([
+      expect.objectContaining({
+        id: sellable.data.id,
+        name: "POS catalogue product",
+        unitPrice: "9.500000",
+      }),
+    ]);
+    expect(result.products.map((product) => product.id)).not.toContain(
+      unavailable.data.id,
+    );
+  });
+
   it("keeps effective price history while maintaining the product and branch controls", async () => {
     const context = { companyId, actorUserId };
     const created = await catalogue.createProduct(
@@ -154,8 +199,11 @@ describe("CatalogManagementService", () => {
       ),
       pool.query<{ action: string; correlation_id: string | null }>(
         `SELECT action, correlation_id::text
-         FROM audit.event WHERE company_id = $1 ORDER BY occurred_at`,
-        [companyId],
+         FROM audit.event
+         WHERE company_id = $1
+           AND (entity_id = $2::uuid OR metadata ->> 'productId' = $2::text)
+         ORDER BY occurred_at`,
+        [companyId, created.data.id],
       ),
     ]);
 

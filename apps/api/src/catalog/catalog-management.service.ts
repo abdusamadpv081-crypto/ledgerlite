@@ -33,6 +33,10 @@ type Catalogue = Readonly<{
   taxCodes: readonly TaxCode[];
   products: readonly Product[];
 }>;
+export type PosCatalogue = Readonly<{
+  products: readonly Product[];
+  refreshedAt: string;
+}>;
 export type CreateTaxCode = Readonly<{
   code: string;
   name: string;
@@ -146,6 +150,46 @@ export class CatalogManagementService {
           WHERE product.is_active ORDER BY product.name`),
       ]);
       return { taxCodes: taxes.rows, products: products.rows.map(product) };
+    });
+  }
+
+  async listPosCatalogue(
+    context: Context & Readonly<{ branchId: string }>,
+  ): Promise<PosCatalogue> {
+    return this.withTenant(context, async (client) => {
+      const branch = await client.query<{ id: string }>(
+        "SELECT id FROM platform.branch WHERE id = $1",
+        [context.branchId],
+      );
+      if (branch.rowCount !== 1)
+        throw new NotFoundException("Branch was not found.");
+      const products = await client.query<Record<string, unknown>>(
+        `SELECT ${productSelect}
+         FROM catalog.product AS product
+         JOIN catalog.product_branch AS availability
+           ON availability.product_id = product.id
+          AND availability.branch_id = $1
+          AND availability.is_sellable
+         LEFT JOIN catalog.tax_code AS tax ON tax.id = product.default_tax_code_id
+         JOIN LATERAL (
+           SELECT item.unit_price, list.currency, list.tax_treatment
+           FROM catalog.price_list_item AS item
+           JOIN catalog.price_list AS list ON list.id = item.price_list_id
+           WHERE item.product_id = product.id AND list.status = 'active'
+             AND list.effective_from <= clock_timestamp()
+             AND (list.effective_until IS NULL OR list.effective_until > clock_timestamp())
+             AND item.effective_from <= clock_timestamp()
+             AND (item.effective_until IS NULL OR item.effective_until > clock_timestamp())
+           ORDER BY item.effective_from DESC LIMIT 1
+         ) AS price ON true
+         WHERE product.is_active
+         ORDER BY product.name`,
+        [context.branchId],
+      );
+      return {
+        products: products.rows.map(product),
+        refreshedAt: new Date().toISOString(),
+      };
     });
   }
 

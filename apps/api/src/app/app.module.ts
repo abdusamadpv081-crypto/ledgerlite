@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller.js";
 import { CatalogController } from "../catalog/catalog.controller.js";
 import { CatalogManagementController } from "../catalog/catalog-management.controller.js";
+import { PosCatalogueController } from "../catalog/pos-catalogue.controller.js";
 import { CatalogManagementService } from "../catalog/catalog-management.service.js";
 import { CompanyController } from "../company/company.controller.js";
 import { CompanyBranchService } from "../company/company-branch.service.js";
@@ -60,6 +61,7 @@ import { CashShiftService } from "../pos/cash-shift.service.js";
           CashierPinController,
           CashShiftController,
           CatalogManagementController,
+          PosCatalogueController,
           CatalogController,
         ]
       : [
@@ -75,6 +77,7 @@ import { CashShiftService } from "../pos/cash-shift.service.js";
           CashierPinController,
           CashShiftController,
           CatalogManagementController,
+          PosCatalogueController,
         ],
   providers: [
     {
