@@ -32,13 +32,19 @@ const idempotencyKeySchema = z
   .max(200)
   .regex(/^[A-Za-z0-9._~-]+$/);
 const timestampSchema = z.string().datetime({ offset: true });
+function hasControlCharacter(value: string): boolean {
+  return [...value].some((character) => {
+    const codePoint = character.codePointAt(0) ?? 0;
+    return codePoint < 32 || codePoint === 127;
+  });
+}
 const nonEmptyText = (max: number) =>
   z
     .string()
     .trim()
     .min(1)
     .max(max)
-    .refine((value) => !/[\u0000-\u001f]/.test(value), {
+    .refine((value) => !hasControlCharacter(value), {
       message: "Control characters are not permitted.",
     });
 const timeZoneSchema = nonEmptyText(64).refine(

@@ -76,9 +76,7 @@ describe("CompanyController", () => {
   });
 
   it("rejects incomplete edits and malformed command identifiers", () => {
-    const controller = new CompanyController(
-      {} as CompanyBranchService,
-    );
+    const controller = new CompanyController({} as CompanyBranchService);
 
     expect(() =>
       controller.updateBranch(
