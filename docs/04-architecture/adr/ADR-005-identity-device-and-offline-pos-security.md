@@ -56,11 +56,33 @@ An owner or authorized manager registers a device while online:
 3. Server creates a device record scoped to company and branch, assigns allowed POS capabilities/cache profile, and records audit history.
 4. Device downloads its initial allowed data/policies and receives a short-lived device authorization context.
 
-Device state includes: device ID, company/branch, public key, status (`active`, `suspended`, `revoked`), last sync, app/schema version, policy version, and cache expiry.
+Device state includes: device ID, company/branch, public key, status
+(`registered`, `suspended`, `retired`), last sync, app/schema version, policy
+version, and cache expiry.
+
+### Implemented browser key boundary
+
+- `/devices` is available to a company owner or a branch manager only for their
+  explicitly assigned active branch. The branch selector comes from the
+  server-authorized branch-context endpoint; it is not inferred from a browser
+  value.
+- In a secure context, the browser creates an ECDSA P-256 key pair with Web
+  Crypto. The private signing key is non-exportable and remains in the
+  `ledgerlite-pos` IndexedDB database; the API receives only a normalized
+  ES256 public JWK.
+- A locally persisted pending registration contains the public key and its
+  idempotency key. Retrying therefore uses the same command after an outage.
+  If the server accepted the command but its response was lost, the client
+  reconciles the matching server fingerprint rather than generating a second
+  key.
+- IndexedDB is a risk-bearing cache, not a hardware key store. Clearing the
+  browser profile loses the private signing key and requires fresh online
+  registration. The device UI reflects the server's status and never treats a
+  suspended or retired server record as trusted POS authority.
 
 ### Revocation and recovery
 
-- A revoked/suspended device cannot obtain a new grant or upload new actions after receiving the status; the server rejects all later events.
+- A retired/suspended device cannot obtain a new grant or upload new actions after receiving the status; the server rejects all later events.
 - A device that has been offline cannot learn a remote revocation until it reconnects. Its limited offline grant remains bounded by expiry and policy.
 - Clearing browser storage, changing browser profile, or losing the device key requires fresh online registration. This is intentional.
 - Device deregistration requires handling unsynced events first; no silent deletion of evidence.

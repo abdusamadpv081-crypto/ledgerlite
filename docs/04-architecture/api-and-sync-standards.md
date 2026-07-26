@@ -13,7 +13,8 @@
 Every state-changing endpoint requires:
 
 - authenticated actor and tenant/branch authorization;
-- authenticated registered device context for POS device commands;
+- authenticated registered device context for POS operational commands after
+  device enrollment;
 - request schema validation;
 - an idempotency key for retryable client/POS commands;
 - server-generated correlation/trace ID;
@@ -76,6 +77,7 @@ historical sale or journal.
 
 | Route                                                                     | Capability                                             | Purpose                                                                                    |
 | ------------------------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `GET /api/v1/auth/branches`                                               | authenticated session                                  | List only the actor's explicitly assigned active branch contexts.                          |
 | `GET/POST /api/v1/companies/:companyId/branches/:branchId/devices`        | `pos.device.manage`                                    | List or register branch-scoped device public keys; the server derives the key fingerprint. |
 | `PATCH /api/v1/companies/:companyId/branches/:branchId/devices/:deviceId` | `pos.device.manage`                                    | Suspend, retire, or reinstate a device with optimistic concurrency.                        |
 | `GET /api/v1/companies/:companyId/accounting/chart`                       | `accounting.journal.read`                              | Read the active chart and accounts.                                                        |
