@@ -1,6 +1,8 @@
 import { Module } from "@nestjs/common";
 import { AppController } from "./app.controller.js";
 import { CatalogController } from "../catalog/catalog.controller.js";
+import { CatalogManagementController } from "../catalog/catalog-management.controller.js";
+import { CatalogManagementService } from "../catalog/catalog-management.service.js";
 import { CompanyController } from "../company/company.controller.js";
 import { CompanyBranchService } from "../company/company-branch.service.js";
 import {
@@ -26,8 +28,19 @@ import { ScopedCapabilityGuard } from "../auth/scoped-capability.guard.js";
 @Module({
   controllers:
     process.env.LEDGERLITE_ENABLE_DEVELOPMENT_CATALOG === "true"
-      ? [AppController, AuthController, CompanyController, CatalogController]
-      : [AppController, AuthController, CompanyController],
+      ? [
+          AppController,
+          AuthController,
+          CompanyController,
+          CatalogManagementController,
+          CatalogController,
+        ]
+      : [
+          AppController,
+          AuthController,
+          CompanyController,
+          CatalogManagementController,
+        ],
   providers: [
     {
       provide: AUTHORIZATION_POOL,
@@ -53,6 +66,7 @@ import { ScopedCapabilityGuard } from "../auth/scoped-capability.guard.js";
     },
     AuthorizationService,
     CompanyBranchService,
+    CatalogManagementService,
     SessionService,
     OidcLoginService,
     SessionAuthenticationGuard,
