@@ -2,6 +2,7 @@ import Dexie, { type Table } from "dexie";
 
 export const POS_DEVICE_APP_VERSION = "0.1.0";
 export const POS_DEVICE_LOCAL_SCHEMA_VERSION = 1;
+export const POS_OFFLINE_AUTHORITY_CACHE_VERSION = 1;
 
 export type DevicePublicKeyJwk = Readonly<{
   alg: "ES256";
@@ -26,13 +27,56 @@ export type LocalPosDevice = Readonly<{
   updatedAt: string;
 }>;
 
-class PosDeviceDatabase extends Dexie {
+export type PosCacheKeyRecord = Readonly<{
+  id: "offline-authority-cache-key-v1";
+  encryptionKey: CryptoKey;
+  createdAt: string;
+}>;
+export type EncryptedOfflineAuthorityRecord = Readonly<{
+  id: string;
+  companyId: string;
+  branchId: string;
+  deviceId: string;
+  cashierUserId: string;
+  grantId: string;
+  issuedAt: string;
+  expiresAt: string;
+  encryptedPayload: ArrayBuffer;
+  initializationVector: ArrayBuffer;
+  updatedAt: string;
+}>;
+export type EncryptedOfflineAuthorityAttemptRecord = Readonly<{
+  id: string;
+  companyId: string;
+  branchId: string;
+  deviceId: string;
+  cashierUserId: string;
+  encryptedPayload: ArrayBuffer;
+  initializationVector: ArrayBuffer;
+  updatedAt: string;
+}>;
+
+export class PosDeviceDatabase extends Dexie {
   devices!: Table<LocalPosDevice, string>;
+  cacheKeys!: Table<PosCacheKeyRecord, string>;
+  offlineAuthorities!: Table<EncryptedOfflineAuthorityRecord, string>;
+  offlineAuthorityAttempts!: Table<
+    EncryptedOfflineAuthorityAttemptRecord,
+    string
+  >;
 
   constructor() {
     super("ledgerlite-pos");
     this.version(1).stores({
       devices: "&id, companyId, branchId, state, deviceId, updatedAt",
+    });
+    this.version(2).stores({
+      devices: "&id, companyId, branchId, state, deviceId, updatedAt",
+      cacheKeys: "&id, createdAt",
+      offlineAuthorities:
+        "&id, companyId, branchId, deviceId, cashierUserId, expiresAt, updatedAt",
+      offlineAuthorityAttempts:
+        "&id, companyId, branchId, deviceId, cashierUserId, updatedAt",
     });
   }
 }
@@ -43,14 +87,14 @@ function deviceId(companyId: string, branchId: string) {
   return `${companyId}:${branchId}`;
 }
 
-function browserDatabase(): PosDeviceDatabase {
+export function posDeviceDatabase(): PosDeviceDatabase {
   if (typeof window === "undefined")
     throw new Error("POS device storage is available only in a browser.");
   database ??= new PosDeviceDatabase();
   return database;
 }
 
-function browserCrypto(): Crypto {
+export function posBrowserCrypto(): Crypto {
   if (typeof window === "undefined" || !window.isSecureContext)
     throw new Error(
       "Device registration needs HTTPS (or localhost) so the browser can protect its signing key.",
@@ -102,7 +146,7 @@ export async function localDevice(
   companyId: string,
   branchId: string,
 ): Promise<LocalPosDevice | undefined> {
-  return browserDatabase().devices.get(deviceId(companyId, branchId));
+  return posDeviceDatabase().devices.get(deviceId(companyId, branchId));
 }
 
 export async function prepareDeviceRegistration(input: {
@@ -110,7 +154,7 @@ export async function prepareDeviceRegistration(input: {
   branchId: string;
   displayName: string;
 }): Promise<LocalPosDevice> {
-  const crypto = browserCrypto();
+  const crypto = posBrowserCrypto();
   const keys = await crypto.subtle.generateKey(
     { name: "ECDSA", namedCurve: "P-256" },
     false,
@@ -139,7 +183,7 @@ export async function prepareDeviceRegistration(input: {
     publicKeyFingerprint: null,
     updatedAt: new Date().toISOString(),
   };
-  await browserDatabase().devices.put(pending);
+  await posDeviceDatabase().devices.put(pending);
   return pending;
 }
 
@@ -157,7 +201,7 @@ export async function completeDeviceRegistration(
     publicKeyFingerprint: response.publicKeyFingerprint,
     updatedAt: new Date().toISOString(),
   };
-  await browserDatabase().devices.put(registered);
+  await posDeviceDatabase().devices.put(registered);
   return registered;
 }
 
@@ -165,7 +209,7 @@ export async function publicKeyFingerprint(
   publicKey: DevicePublicKeyJwk,
 ): Promise<string> {
   const bytes = new TextEncoder().encode(canonicalJson(publicKey));
-  const digest = await browserCrypto().subtle.digest("SHA-256", bytes);
+  const digest = await posBrowserCrypto().subtle.digest("SHA-256", bytes);
   return [...new Uint8Array(digest)]
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");
@@ -177,7 +221,7 @@ export async function signDevicePayload(
 ): Promise<ArrayBuffer> {
   const signingBytes = new Uint8Array(payload.byteLength);
   signingBytes.set(payload);
-  return browserCrypto().subtle.sign(
+  return posBrowserCrypto().subtle.sign(
     { name: "ECDSA", hash: "SHA-256" },
     device.privateSigningKey,
     signingBytes.buffer,
