@@ -1,11 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { ConflictException, Inject, Injectable } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 import { AUTHORIZATION_POOL } from "../auth/authorization.service.js";
 
