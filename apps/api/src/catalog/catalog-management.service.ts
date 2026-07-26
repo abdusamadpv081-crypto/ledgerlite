@@ -139,8 +139,8 @@ export class CatalogManagementService {
             FROM catalog.price_list_item AS item
             JOIN catalog.price_list AS list ON list.id = item.price_list_id
             WHERE item.product_id = product.id AND list.status = 'active'
-              AND list.effective_from <= now() AND (list.effective_until IS NULL OR list.effective_until > now())
-              AND item.effective_from <= now() AND (item.effective_until IS NULL OR item.effective_until > now())
+              AND list.effective_from <= clock_timestamp() AND (list.effective_until IS NULL OR list.effective_until > clock_timestamp())
+              AND item.effective_from <= clock_timestamp() AND (item.effective_until IS NULL OR item.effective_until > clock_timestamp())
             ORDER BY item.effective_from DESC LIMIT 1
           ) AS price ON true
           WHERE product.is_active ORDER BY product.name`),
@@ -210,7 +210,7 @@ export class CatalogManagementService {
         if (company.rowCount !== 1)
           throw new NotFoundException("Company was not found.");
         const existing = await client.query<{ id: string }>(
-          "SELECT id FROM catalog.price_list WHERE name = $1 AND status = 'active' AND effective_from <= now() AND (effective_until IS NULL OR effective_until > now()) ORDER BY effective_from DESC LIMIT 1",
+          "SELECT id FROM catalog.price_list WHERE name = $1 AND status = 'active' AND effective_from <= clock_timestamp() AND (effective_until IS NULL OR effective_until > clock_timestamp()) ORDER BY effective_from DESC LIMIT 1",
           [input.priceListName],
         );
         const priceListId =
@@ -460,6 +460,10 @@ export class CatalogManagementService {
         return record.response as CommandResponse<T>;
       if (!record.is_new)
         throw new ConflictException("The command is still being processed.");
+      await client.query(
+        "SELECT set_config('app.current_correlation_id', $1, true)",
+        [record.correlation_id],
+      );
       const response = await operation(client, record.correlation_id);
       await client.query(
         "SELECT platform.complete_command_idempotency($1, $2, $3)",
@@ -486,10 +490,10 @@ export class CatalogManagementService {
        FROM catalog.price_list_item AS item
        JOIN catalog.price_list AS list ON list.id = item.price_list_id
        WHERE item.product_id = $1 AND list.name = $2 AND list.status = 'active'
-         AND list.effective_from <= now()
-         AND (list.effective_until IS NULL OR list.effective_until > now())
-         AND item.effective_from <= now()
-         AND (item.effective_until IS NULL OR item.effective_until > now())
+         AND list.effective_from <= clock_timestamp()
+         AND (list.effective_until IS NULL OR list.effective_until > clock_timestamp())
+         AND item.effective_from <= clock_timestamp()
+         AND (item.effective_until IS NULL OR item.effective_until > clock_timestamp())
        ORDER BY item.effective_from DESC LIMIT 1 FOR UPDATE OF item`,
       [productId, priceListName],
     );
@@ -528,10 +532,10 @@ export class CatalogManagementService {
          FROM catalog.price_list_item AS item
          JOIN catalog.price_list AS list ON list.id = item.price_list_id
          WHERE item.product_id = product.id AND list.status = 'active'
-           AND list.effective_from <= now()
-           AND (list.effective_until IS NULL OR list.effective_until > now())
-           AND item.effective_from <= now()
-           AND (item.effective_until IS NULL OR item.effective_until > now())
+           AND list.effective_from <= clock_timestamp()
+           AND (list.effective_until IS NULL OR list.effective_until > clock_timestamp())
+           AND item.effective_from <= clock_timestamp()
+           AND (item.effective_until IS NULL OR item.effective_until > clock_timestamp())
          ORDER BY item.effective_from DESC LIMIT 1
        ) AS price ON true
        WHERE product.id = $1`,
