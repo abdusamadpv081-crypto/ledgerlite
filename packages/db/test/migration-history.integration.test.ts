@@ -43,6 +43,8 @@ describe("database migration ledger", () => {
       "000020_active_branch_contexts.sql",
       "000021_grant_branch_context_reader.sql",
       "000022_offline_grant_foundation.sql",
+      "000023_cashier_pin_and_policy.sql",
+      "000024_allow_cashier_pin_self_read.sql",
     ]);
     expect(
       result.rows.every((row) => /^[a-f0-9]{64}$/.test(row.checksum)),
