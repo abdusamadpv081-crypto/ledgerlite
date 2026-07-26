@@ -101,6 +101,17 @@ export default function DevicesPage() {
     () => branches.filter((branch) => branch.companyId === companyId),
     [branches, companyId],
   );
+  const storedServerDevice = useMemo(
+    () =>
+      devices.find((device) => device.id === storedDevice?.deviceId) ?? null,
+    [devices, storedDevice],
+  );
+  const browserTrustLabel =
+    storedDevice?.state === "registered"
+      ? storedServerDevice?.status === "registered"
+        ? "Trusted"
+        : (storedServerDevice?.status ?? "Verify status")
+      : "Not registered";
 
   const loadDeviceState = useCallback(
     async (nextCompanyId: string, nextBranchId: string) => {
@@ -425,15 +436,15 @@ export default function DevicesPage() {
           </article>
           <article>
             <span>This browser</span>
-            <strong>
-              {storedDevice?.state === "registered"
-                ? "Trusted"
-                : "Not registered"}
-            </strong>
+            <strong>{browserTrustLabel}</strong>
             <small>
-              {storedDevice?.state === "pending"
-                ? "Registration can be safely retried"
-                : "Private signing key stays in browser storage"}
+              {storedServerDevice?.status === "suspended"
+                ? "Server suspension blocks future POS authority"
+                : storedServerDevice?.status === "retired"
+                  ? "Retired devices cannot receive new POS authority"
+                  : storedDevice?.state === "pending"
+                    ? "Registration can be safely retried"
+                    : "Private signing key stays in browser storage"}
             </small>
           </article>
           <article>
@@ -456,12 +467,22 @@ export default function DevicesPage() {
               <div className="device-trust-state">
                 <ShieldCheck aria-hidden="true" size={24} />
                 <div>
-                  <strong>{storedDevice.displayName} is registered.</strong>
+                  <strong>
+                    {storedDevice.displayName} is{" "}
+                    {browserTrustLabel.toLowerCase()}.
+                  </strong>
                   <p>
                     Its non-exportable private signing key is stored only in
                     this browser profile. Clearing browser storage requires a
                     new device registration.
                   </p>
+                  {storedServerDevice?.status !== "registered" ? (
+                    <p>
+                      The server status controls POS authority. This browser
+                      cannot obtain a new operational grant until an authorized
+                      manager resolves the status.
+                    </p>
+                  ) : null}
                   <code>
                     {shortFingerprint(storedDevice.publicKeyFingerprint ?? "")}
                   </code>
