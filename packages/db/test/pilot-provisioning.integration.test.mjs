@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import process from "node:process";
 
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { Pool } from "pg";

@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import process from "node:process";
 import { Pool } from "pg";
 
 const DEFAULTS = {
