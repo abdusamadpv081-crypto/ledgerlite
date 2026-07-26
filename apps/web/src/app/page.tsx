@@ -8,6 +8,7 @@ import {
   RefreshCw,
   Store,
   Tags,
+  WifiOff,
 } from "lucide-react";
 import { commandHeaders, request } from "../lib/api";
 type Company = {
@@ -293,6 +294,10 @@ export default function HomePage() {
           <a href="/devices">
             <MonitorSmartphone size={18} />
             POS devices
+          </a>
+          <a href="/pos">
+            <WifiOff size={18} />
+            POS access
           </a>
         </nav>
         <p className="sidebar-note">

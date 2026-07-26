@@ -17,6 +17,7 @@ import {
   RefreshCw,
   ShieldCheck,
   Trash2,
+  WifiOff,
 } from "lucide-react";
 import { commandHeaders, request } from "../../lib/api";
 
@@ -418,6 +419,10 @@ export default function FinancePage() {
           <a href="/devices">
             <MonitorSmartphone size={18} />
             POS devices
+          </a>
+          <a href="/pos">
+            <WifiOff size={18} />
+            POS access
           </a>
         </nav>
         <p className="sidebar-note">

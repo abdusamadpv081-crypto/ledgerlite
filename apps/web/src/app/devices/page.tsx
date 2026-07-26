@@ -15,6 +15,7 @@ import {
   RefreshCw,
   Settings2,
   ShieldCheck,
+  WifiOff,
 } from "lucide-react";
 import { commandHeaders, request } from "../../lib/api";
 import {
@@ -356,6 +357,10 @@ export default function DevicesPage() {
           <a className="nav-active" href="#devices">
             <MonitorSmartphone size={18} />
             POS devices
+          </a>
+          <a href="/pos">
+            <WifiOff size={18} />
+            POS access
           </a>
         </nav>
         <p className="sidebar-note">
