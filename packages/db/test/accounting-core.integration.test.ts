@@ -77,7 +77,12 @@ async function insertBalancedDraft(client: PoolClient) {
        ($1, $2, $4, 2, 0, 10)`,
     [companyId, entryId, accounts.rows[0].id, accounts.rows[1].id],
   );
-  return { entryId, periodId };
+  return {
+    entryId,
+    periodId,
+    cashAccountId: accounts.rows[0].id,
+    salesAccountId: accounts.rows[1].id,
+  };
 }
 
 beforeAll(async () => {
@@ -158,7 +163,8 @@ describe("accounting core database invariants", () => {
 
   it("rejects an unbalanced draft and a closed period", async () => {
     await asCompany(async (client) => {
-      const { entryId, periodId } = await insertBalancedDraft(client);
+      const { entryId, periodId, cashAccountId, salesAccountId } =
+        await insertBalancedDraft(client);
       await client.query(
         `UPDATE accounting.journal_line
          SET credit_amount = 9 WHERE journal_entry_id = $1 AND line_number = 2`,
@@ -169,17 +175,40 @@ describe("accounting core database invariants", () => {
         client.query("SELECT accounting.post_journal_entry($1)", [entryId]),
       ).rejects.toThrow(/not balanced/i);
       await client.query("ROLLBACK TO SAVEPOINT unbalanced_post");
-      await client.query(
-        `UPDATE accounting.journal_line
-         SET credit_amount = 10 WHERE journal_entry_id = $1 AND line_number = 2`,
-        [entryId],
-      );
-      await client.query(
-        "UPDATE accounting.fiscal_period SET status = 'closing' WHERE id = $1",
+      await client.query("DELETE FROM accounting.journal_entry WHERE id = $1", [
+        entryId,
+      ]);
+      const period = await client.query<{ updated_at: string }>(
+        `SELECT to_char(updated_at AT TIME ZONE 'UTC',
+          'YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS updated_at
+         FROM accounting.fiscal_period WHERE id = $1`,
         [periodId],
       );
+      await client.query("SELECT accounting.close_fiscal_period($1, $2, $3)", [
+        periodId,
+        period.rows[0].updated_at,
+        actorUserId,
+      ]);
+      const closedEntryId = (
+        await client.query<{ id: string }>(
+          `INSERT INTO accounting.journal_entry
+             (company_id, fiscal_period_id, journal_date, description, created_by_user_id)
+           VALUES ($1, $2, '2026-07-26', 'Closed period test', $3) RETURNING id`,
+          [companyId, periodId, actorUserId],
+        )
+      ).rows[0].id;
+      await client.query(
+        `INSERT INTO accounting.journal_line
+           (company_id, journal_entry_id, account_id, line_number, debit_amount, credit_amount)
+         VALUES
+           ($1, $2, $3, 1, 10, 0),
+           ($1, $2, $4, 2, 0, 10)`,
+        [companyId, closedEntryId, cashAccountId, salesAccountId],
+      );
       await expect(
-        client.query("SELECT accounting.post_journal_entry($1)", [entryId]),
+        client.query("SELECT accounting.post_journal_entry($1)", [
+          closedEntryId,
+        ]),
       ).rejects.toThrow(/not open/i);
     });
   });
