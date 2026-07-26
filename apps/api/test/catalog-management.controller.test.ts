@@ -66,6 +66,16 @@ describe("CatalogManagementController", () => {
       ],
       [
         { companyId, actorUserId: actor.userId },
+        {
+          name: "Coffee",
+          unitPrice: "12.50",
+          productKind: "stock",
+          priceListName: "Default retail",
+        },
+        "product-create-1",
+      ],
+      [
+        { companyId, actorUserId: actor.userId },
         "d556b3b8-fdbc-4ea6-9c0b-531dd8e704ed",
         { barcode: "629100000001" },
         "barcode-create-1",
@@ -76,16 +86,6 @@ describe("CatalogManagementController", () => {
         "f0fd3509-4724-4b95-86c8-d2a4a6f0a204",
         { isSellable: false, reorderPoint: "4" },
         "availability-set-1",
-      ],
-      [
-        { companyId, actorUserId: actor.userId },
-        {
-          name: "Coffee",
-          unitPrice: "12.50",
-          productKind: "stock",
-          priceListName: "Default retail",
-        },
-        "product-create-1",
       ],
     ]);
   });
