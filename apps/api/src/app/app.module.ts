@@ -31,6 +31,8 @@ import { ChartManagementController } from "../accounting/chart-management.contro
 import { ChartManagementService } from "../accounting/chart-management.service.js";
 import { JournalManagementController } from "../accounting/journal-management.controller.js";
 import { JournalManagementService } from "../accounting/journal-management.service.js";
+import { PeriodManagementController } from "../accounting/period-management.controller.js";
+import { PeriodManagementService } from "../accounting/period-management.service.js";
 
 @Module({
   controllers:
@@ -41,6 +43,7 @@ import { JournalManagementService } from "../accounting/journal-management.servi
           CompanyController,
           ChartManagementController,
           JournalManagementController,
+          PeriodManagementController,
           DeviceManagementController,
           CatalogManagementController,
           CatalogController,
@@ -51,6 +54,7 @@ import { JournalManagementService } from "../accounting/journal-management.servi
           CompanyController,
           ChartManagementController,
           JournalManagementController,
+          PeriodManagementController,
           DeviceManagementController,
           CatalogManagementController,
         ],
@@ -83,6 +87,7 @@ import { JournalManagementService } from "../accounting/journal-management.servi
     DeviceManagementService,
     ChartManagementService,
     JournalManagementService,
+    PeriodManagementService,
     CompanyContextService,
     SessionService,
     OidcLoginService,
