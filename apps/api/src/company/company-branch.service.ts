@@ -401,6 +401,10 @@ export class CompanyBranchService {
         return record.response as CommandResponse<T>;
       if (!record.is_new)
         throw new ConflictException("The command is still being processed.");
+      await client.query(
+        "SELECT set_config('app.current_correlation_id', $1, true)",
+        [record.correlation_id],
+      );
       const response = await operation(client, record.correlation_id);
       await client.query(
         "SELECT platform.complete_command_idempotency($1, $2, $3)",
