@@ -24,7 +24,7 @@ This is the release-one logical schema. Columns listed as `FK` must also preserv
 | `catalog.product`         | `id`, company FK, SKU, name, kind, active, default tax code         | Product master; a nonblank SKU is unique per company when supplied. |
 | `catalog.product_barcode` | product/company FK, barcode, symbology, active                      | Barcode unique per company; inactive values remain reserved.        |
 | `catalog.product_branch`  | product/branch FK, sellable, reorder settings                       | Branch availability/configuration.                                  |
-| `catalog.price_list`      | company FK, currency, effective dates, status                       | Supports future price lists.                                        |
+| `catalog.price_list`      | company FK, currency, tax treatment, effective dates, status        | Tax-inclusive UAE retail default; supports future price lists.      |
 | `catalog.price_list_item` | price-list/product FK, unit price, effective dates                  | No price overwrite; new effective record.                           |
 | `catalog.tax_code`        | company FK, code, name, rate, effective dates, sales tax account FK | UAE VAT configurable data.                                          |
 | `catalog.customer`        | company FK, display/legal name, contact, TRN, status                | Minimal MVP customer data; not preloaded on POS offline by default. |

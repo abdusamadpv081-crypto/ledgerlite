@@ -207,4 +207,15 @@ describe("catalogue and policy tenant isolation", () => {
       before.rows[0].updated_at.getTime(),
     );
   });
+
+  it("defaults a price list to tax-inclusive retail pricing", async () => {
+    const treatment = await asCompany(companyAId, (client) =>
+      client.query<{ tax_treatment: string }>(
+        "SELECT tax_treatment FROM catalog.price_list WHERE company_id = $1 AND name = 'Retail'",
+        [companyAId],
+      ),
+    );
+
+    expect(treatment.rows).toEqual([{ tax_treatment: "inclusive" }]);
+  });
 });
