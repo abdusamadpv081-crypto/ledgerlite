@@ -7,7 +7,6 @@ import {
 } from "node:crypto";
 
 import {
-  BadRequestException,
   ConflictException,
   ForbiddenException,
   Inject,
