@@ -9,8 +9,14 @@ describe("role capability templates", () => {
     expect(roleGrantsCapability("owner", "accounting.period.manage")).toBe(
       true,
     );
+    expect(roleGrantsCapability("accountant", "accounting.chart.manage")).toBe(
+      true,
+    );
     expect(
       roleGrantsCapability("branch_manager", "accounting.period.manage"),
+    ).toBe(false);
+    expect(
+      roleGrantsCapability("branch_manager", "accounting.chart.manage"),
     ).toBe(false);
   });
 

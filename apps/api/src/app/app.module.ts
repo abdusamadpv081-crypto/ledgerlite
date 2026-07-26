@@ -27,6 +27,8 @@ import { ScopedCapabilityGuard } from "../auth/scoped-capability.guard.js";
 import { CompanyContextService } from "../auth/company-context.service.js";
 import { DeviceManagementController } from "../device/device-management.controller.js";
 import { DeviceManagementService } from "../device/device-management.service.js";
+import { ChartManagementController } from "../accounting/chart-management.controller.js";
+import { ChartManagementService } from "../accounting/chart-management.service.js";
 
 @Module({
   controllers:
@@ -35,6 +37,7 @@ import { DeviceManagementService } from "../device/device-management.service.js"
           AppController,
           AuthController,
           CompanyController,
+          ChartManagementController,
           DeviceManagementController,
           CatalogManagementController,
           CatalogController,
@@ -43,6 +46,7 @@ import { DeviceManagementService } from "../device/device-management.service.js"
           AppController,
           AuthController,
           CompanyController,
+          ChartManagementController,
           DeviceManagementController,
           CatalogManagementController,
         ],
@@ -73,6 +77,7 @@ import { DeviceManagementService } from "../device/device-management.service.js"
     CompanyBranchService,
     CatalogManagementService,
     DeviceManagementService,
+    ChartManagementService,
     CompanyContextService,
     SessionService,
     OidcLoginService,
