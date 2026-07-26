@@ -3,10 +3,10 @@
 ## Scope
 
 Ledger Lite's pilot uses **assisted/operator provisioning**, not public
-self-signup. An operator provisions the first active company owner before that
-person uses the OIDC login flow. This prevents an arbitrary identity-provider
-account from creating a Ledger Lite company or gaining access merely by signing
-in.
+self-signup. An operator provisions the first active company owner and later
+staff access before each person uses the OIDC login flow. This prevents an
+arbitrary identity-provider account from creating a Ledger Lite company or
+gaining access merely by signing in.
 
 The operator command creates one atomic, auditable unit:
 
@@ -21,6 +21,41 @@ The operator command creates one atomic, auditable unit:
 The record is idempotent: repeating the exact provisioning reference for the
 same OIDC identity returns the already-created company, branch, and owner IDs.
 It never makes a second company.
+
+## Provision or revoke pilot staff access
+
+After the owner has approved an access request in the pilot/support ticket, an
+operator can grant or revoke one role assignment. This is the pilot substitute
+for a public invite/access-management screen. It accepts only verified OIDC
+subjects; it never accepts a password, access token, or MFA code.
+
+Supported roles are deliberately constrained:
+
+- `cashier` and `branch_manager` require one active `PILOT_STAFF_BRANCH_ID`.
+- `accountant` is company-scoped and must not have a branch ID.
+- A new company-wide `owner` is not created through this command; use a
+  reviewed ownership-transfer procedure instead.
+
+```powershell
+$env:DATABASE_URL = '<operator database connection string>'
+$env:PILOT_STAFF_PROVISIONING_REFERENCE = 'OPS-1240'
+$env:PILOT_STAFF_ACCESS_ACTION = 'grant' # or 'revoke'
+$env:PILOT_STAFF_COMPANY_ID = '<company UUID from the protected pilot ticket>'
+$env:PILOT_STAFF_IDENTITY_PROVIDER = 'https://identity.example.com/'
+$env:PILOT_STAFF_EXTERNAL_SUBJECT = '<verified OIDC subject>'
+$env:PILOT_STAFF_ROLE = 'cashier' # cashier, branch_manager, or accountant
+$env:PILOT_STAFF_BRANCH_ID = '<branch UUID>' # required except for accountant
+$env:PILOT_STAFF_DISPLAY_NAME = 'Pilot cashier' # required for grant only
+corepack pnpm --filter @ledgerlite/db provision:pilot-staff
+```
+
+The command creates or reuses the active identity and membership for a grant,
+then creates the requested role assignment. A revoke sets that assignment's
+effective end time; it does not delete history. Each successful change writes
+an immutable `access.granted` or `access.revoked` audit event with a generated
+correlation ID and an immutable `platform.staff_access_provisioning` record.
+Repeating the same reference and details returns the original IDs with
+`changed: false`; reusing the reference for different details is rejected.
 
 ## Prerequisites
 
@@ -77,13 +112,12 @@ session, OIDC token, password, PIN, or encryption key.
    are introduced with capability guards.
 3. If identity/company information is wrong, do not edit or delete the audit
    event or provisioning record. Open a corrective operations ticket and use a
-   reviewed remediation procedure. Identity disablement, access changes, and
-   invitation workflows remain separate follow-on work.
+   new grant/revoke reference or a reviewed remediation procedure.
 
 ## Security boundary
 
 `ledgerlite_operator` is directly granted only the operator provisioning record
 access and is allowed to assume the least-privilege `ledgerlite_app` role inside
 the atomic provisioning transaction. The runtime application role has no grant
-on `platform.company_provisioning`. This separation is tested in the database
-suite.
+on `platform.company_provisioning` or `platform.staff_access_provisioning`.
+This separation is tested in the database suite.
