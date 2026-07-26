@@ -138,7 +138,7 @@ nav .nav-active {
   margin-block: var(--space-6);
 }
 .summary-grid {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
 }
 .summary-grid article,
 .panel,

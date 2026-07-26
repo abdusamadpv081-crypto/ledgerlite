@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   CircleAlert,
   KeyRound,
@@ -9,7 +15,14 @@ import {
   ShieldCheck,
   WifiOff,
 } from "lucide-react";
-import { request } from "../../lib/api";
+import { commandHeaders, request } from "../../lib/api";
+import {
+  cachedCashierPin,
+  enrollCashierPin,
+  unlockCashierPin,
+  type CachedCashierPin,
+  type CashierPinSetProfile,
+} from "../../lib/pos-cashier-pin";
 import {
   cachedOfflineAuthority,
   refreshOfflineAuthority,
@@ -34,6 +47,7 @@ type Branch = {
   name: string;
 };
 type CurrentUser = { userId: string };
+type CommandResponse<T> = { data: T; correlationId: string };
 
 function canOperatePos(company: Company | undefined): boolean {
   return Boolean(
@@ -57,11 +71,17 @@ export default function PosAccessPage() {
   const [branchId, setBranchId] = useState("");
   const [device, setDevice] = useState<LocalPosDevice>();
   const [authority, setAuthority] = useState<CachedOfflineAuthority>();
+  const [cashierPin, setCashierPin] = useState<CachedCashierPin>();
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [unlockPinValue, setUnlockPinValue] = useState("");
+  const [localSessionExpiresAt, setLocalSessionExpiresAt] = useState("");
   const [message, setMessage] = useState(
     "Checking your assigned POS workspace...",
   );
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [pinSubmitting, setPinSubmitting] = useState(false);
   const [secureBrowser, setSecureBrowser] = useState(false);
   const company = useMemo(
     () => companies.find((item) => item.companyId === companyId),
@@ -89,6 +109,7 @@ export default function PosAccessPage() {
         setDevice(storedDevice);
         if (storedDevice?.state !== "registered" || !storedDevice.deviceId) {
           setAuthority(undefined);
+          setCashierPin(undefined);
           setMessage(
             "Register this browser as a POS device before refreshing offline authority.",
           );
@@ -101,6 +122,13 @@ export default function PosAccessPage() {
           cashierUserId: currentUserId,
         });
         setAuthority(cached);
+        const cachedPin = await cachedCashierPin({
+          companyId: nextCompanyId,
+          branchId: nextBranchId,
+          deviceId: storedDevice.deviceId,
+          cashierUserId: currentUserId,
+        });
+        setCashierPin(cachedPin);
         setMessage(
           cached
             ? `Offline authority is ready until ${formatTimestamp(cached.expiresAt)}.`
@@ -109,6 +137,7 @@ export default function PosAccessPage() {
       } catch (error) {
         setDevice(undefined);
         setAuthority(undefined);
+        setCashierPin(undefined);
         setMessage(
           error instanceof Error
             ? error.message
@@ -184,6 +213,102 @@ export default function PosAccessPage() {
     }
   }
 
+  function offlineScope() {
+    if (!companyId || !branchId || !userId || !device?.deviceId) return;
+    return {
+      companyId,
+      branchId,
+      deviceId: device.deviceId,
+      cashierUserId: userId,
+    };
+  }
+
+  async function setPin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const scope = offlineScope();
+    if (!scope || !device || newPin !== confirmPin) {
+      if (newPin !== confirmPin)
+        setMessage("The POS PIN entries do not match.");
+      return;
+    }
+    setPinSubmitting(true);
+    try {
+      const response = await request<CommandResponse<CashierPinSetProfile>>(
+        `/companies/${scope.companyId}/branches/${scope.branchId}/pos/pin`,
+        {
+          method: "POST",
+          headers: commandHeaders(),
+          body: JSON.stringify({ deviceId: scope.deviceId, pin: newPin }),
+        },
+      );
+      const enrolled = await enrollCashierPin(scope, newPin, response.data);
+      setCashierPin(enrolled);
+      setNewPin("");
+      setConfirmPin("");
+      setMessage(
+        "Cashier PIN is set. Its encrypted local verifier is ready for offline unlock.",
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not set the cashier PIN.",
+      );
+    } finally {
+      setPinSubmitting(false);
+    }
+  }
+
+  async function verifyCashierPin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const scope = offlineScope();
+    if (!scope || !authority) return;
+    setPinSubmitting(true);
+    try {
+      const result = await unlockCashierPin(scope, unlockPinValue, authority);
+      setUnlockPinValue("");
+      if (result.status === "unlocked") {
+        setLocalSessionExpiresAt(result.expiresAt);
+        setCashierPin((current) =>
+          current
+            ? { ...current, failedAttempts: 0, lockedUntil: null }
+            : current,
+        );
+        setMessage(
+          `Cashier PIN verified locally until ${formatTimestamp(result.expiresAt)}. A cash shift is still required before sales.`,
+        );
+      } else if (result.status === "locked") {
+        setCashierPin((current) =>
+          current ? { ...current, lockedUntil: result.lockedUntil } : current,
+        );
+        setMessage(
+          `Offline PIN unlock is locked until ${formatTimestamp(result.lockedUntil)}.`,
+        );
+      } else {
+        setCashierPin((current) =>
+          current
+            ? {
+                ...current,
+                failedAttempts:
+                  current.policy.maxFailedAttempts - result.remainingAttempts,
+              }
+            : current,
+        );
+        setMessage(
+          `POS PIN was not accepted. ${result.remainingAttempts} attempts remain before local cool-off.`,
+        );
+      }
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not verify the local cashier PIN.",
+      );
+    } finally {
+      setPinSubmitting(false);
+    }
+  }
+
   function selectCompany(nextCompanyId: string) {
     const nextBranch = branches.find(
       (branch) => branch.companyId === nextCompanyId,
@@ -192,6 +317,8 @@ export default function PosAccessPage() {
     setBranchId(nextBranch?.branchId ?? "");
     setDevice(undefined);
     setAuthority(undefined);
+    setCashierPin(undefined);
+    setLocalSessionExpiresAt("");
     if (nextBranch)
       void loadAuthority(nextCompanyId, nextBranch.branchId, userId);
   }
@@ -200,6 +327,8 @@ export default function PosAccessPage() {
     setBranchId(nextBranchId);
     setDevice(undefined);
     setAuthority(undefined);
+    setCashierPin(undefined);
+    setLocalSessionExpiresAt("");
     void loadAuthority(companyId, nextBranchId, userId);
   }
 
@@ -315,6 +444,23 @@ export default function PosAccessPage() {
                 : "The configured policy controls grant duration"}
             </small>
           </article>
+          <article>
+            <span>Cashier unlock</span>
+            <strong>
+              {localSessionExpiresAt
+                ? "Unlocked"
+                : cashierPin
+                  ? "PIN ready"
+                  : "Not set"}
+            </strong>
+            <small>
+              {localSessionExpiresAt
+                ? `Session ends ${formatTimestamp(localSessionExpiresAt)}`
+                : cashierPin
+                  ? "Enter PIN to start a bounded local session"
+                  : "Set a PIN online on this browser device"}
+            </small>
+          </article>
         </section>
 
         <section className="content-grid device-grid">
@@ -373,6 +519,105 @@ export default function PosAccessPage() {
               the same encrypted proof and idempotency keys until the server
               response is recovered.
             </p>
+
+            <div className="panel-stack">
+              <div>
+                <p className="eyebrow">Cashier PIN</p>
+                <h3>{cashierPin ? "Local unlock" : "Set a cashier PIN"}</h3>
+              </div>
+              {!cashierPin ? (
+                <form className="stack compact" onSubmit={setPin}>
+                  <label>
+                    New numeric PIN
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="new-password"
+                      value={newPin}
+                      onChange={(event) => setNewPin(event.target.value)}
+                      minLength={8}
+                      maxLength={12}
+                      pattern="[0-9]{8,12}"
+                      required
+                      disabled={
+                        pinSubmitting ||
+                        !authority ||
+                        device?.state !== "registered"
+                      }
+                    />
+                  </label>
+                  <label>
+                    Confirm numeric PIN
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="new-password"
+                      value={confirmPin}
+                      onChange={(event) => setConfirmPin(event.target.value)}
+                      minLength={8}
+                      maxLength={12}
+                      pattern="[0-9]{8,12}"
+                      required
+                      disabled={
+                        pinSubmitting ||
+                        !authority ||
+                        device?.state !== "registered"
+                      }
+                    />
+                  </label>
+                  <button
+                    className="secondary"
+                    disabled={
+                      pinSubmitting ||
+                      !authority ||
+                      device?.state !== "registered"
+                    }
+                  >
+                    <KeyRound size={18} />
+                    Set cashier PIN
+                  </button>
+                </form>
+              ) : (
+                <form className="stack compact" onSubmit={verifyCashierPin}>
+                  <label>
+                    Cashier PIN
+                    <input
+                      type="password"
+                      inputMode="numeric"
+                      autoComplete="current-password"
+                      value={unlockPinValue}
+                      onChange={(event) =>
+                        setUnlockPinValue(event.target.value)
+                      }
+                      maxLength={cashierPin.policy.maxLength}
+                      pattern="[0-9]+"
+                      required
+                      disabled={pinSubmitting || !authority}
+                    />
+                  </label>
+                  {cashierPin.lockedUntil ? (
+                    <p className="form-help">
+                      Local unlock is unavailable until{" "}
+                      {formatTimestamp(cashierPin.lockedUntil)}.
+                    </p>
+                  ) : (
+                    <p className="form-help">
+                      {cashierPin.policy.maxFailedAttempts -
+                        cashierPin.failedAttempts}{" "}
+                      attempts remain before a{" "}
+                      {cashierPin.policy.coolOffMinutes}-minute local cool-off.
+                    </p>
+                  )}
+                  <button
+                    className="secondary"
+                    disabled={pinSubmitting || !authority}
+                  >
+                    <KeyRound size={18} />
+                    Verify cashier PIN
+                  </button>
+                </form>
+              )}
+            </div>
           </article>
 
           <article className="panel">
