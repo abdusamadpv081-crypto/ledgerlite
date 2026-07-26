@@ -66,6 +66,17 @@ export type EncryptedCashierPinRecord = Readonly<{
   initializationVector: ArrayBuffer;
   updatedAt: string;
 }>;
+export type EncryptedCashShiftRecord = Readonly<{
+  id: string;
+  companyId: string;
+  branchId: string;
+  deviceId: string;
+  cashierUserId: string;
+  shiftId: string;
+  encryptedPayload: ArrayBuffer;
+  initializationVector: ArrayBuffer;
+  updatedAt: string;
+}>;
 
 export class PosDeviceDatabase extends Dexie {
   devices!: Table<LocalPosDevice, string>;
@@ -76,6 +87,7 @@ export class PosDeviceDatabase extends Dexie {
     string
   >;
   cashierPins!: Table<EncryptedCashierPinRecord, string>;
+  cashierShifts!: Table<EncryptedCashShiftRecord, string>;
 
   constructor() {
     super("ledgerlite-pos");
@@ -99,6 +111,18 @@ export class PosDeviceDatabase extends Dexie {
         "&id, companyId, branchId, deviceId, cashierUserId, updatedAt",
       cashierPins:
         "&id, companyId, branchId, deviceId, cashierUserId, pinVersion, updatedAt",
+    });
+    this.version(4).stores({
+      devices: "&id, companyId, branchId, state, deviceId, updatedAt",
+      cacheKeys: "&id, createdAt",
+      offlineAuthorities:
+        "&id, companyId, branchId, deviceId, cashierUserId, expiresAt, updatedAt",
+      offlineAuthorityAttempts:
+        "&id, companyId, branchId, deviceId, cashierUserId, updatedAt",
+      cashierPins:
+        "&id, companyId, branchId, deviceId, cashierUserId, pinVersion, updatedAt",
+      cashierShifts:
+        "&id, companyId, branchId, deviceId, cashierUserId, shiftId, updatedAt",
     });
   }
 }

@@ -29,6 +29,12 @@ import {
   type CachedOfflineAuthority,
 } from "../../lib/pos-offline-authority";
 import {
+  cacheCashShift,
+  cachedCashShift,
+  clearCachedCashShift,
+  type CachedCashShift,
+} from "../../lib/pos-cash-shift";
+import {
   canUseDeviceCrypto,
   localDevice,
   type LocalPosDevice,
@@ -72,9 +78,11 @@ export default function PosAccessPage() {
   const [device, setDevice] = useState<LocalPosDevice>();
   const [authority, setAuthority] = useState<CachedOfflineAuthority>();
   const [cashierPin, setCashierPin] = useState<CachedCashierPin>();
+  const [cashShift, setCashShift] = useState<CachedCashShift>();
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [unlockPinValue, setUnlockPinValue] = useState("");
+  const [openingFloat, setOpeningFloat] = useState("");
   const [localSessionExpiresAt, setLocalSessionExpiresAt] = useState("");
   const [message, setMessage] = useState(
     "Checking your assigned POS workspace...",
@@ -82,6 +90,7 @@ export default function PosAccessPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [pinSubmitting, setPinSubmitting] = useState(false);
+  const [shiftSubmitting, setShiftSubmitting] = useState(false);
   const [secureBrowser, setSecureBrowser] = useState(false);
   const company = useMemo(
     () => companies.find((item) => item.companyId === companyId),
@@ -94,6 +103,14 @@ export default function PosAccessPage() {
   const selectableBranches = useMemo(
     () => branches.filter((branch) => branch.companyId === companyId),
     [branches, companyId],
+  );
+  const cashierUnlocked =
+    Boolean(localSessionExpiresAt) &&
+    Date.parse(localSessionExpiresAt) > Date.now();
+  const cashShiftOnThisDevice = Boolean(
+    cashShift &&
+    cashShift.deviceId === device?.deviceId &&
+    (cashShift.status === "open" || cashShift.status === "close_requested"),
   );
 
   const loadAuthority = useCallback(
@@ -110,25 +127,41 @@ export default function PosAccessPage() {
         if (storedDevice?.state !== "registered" || !storedDevice.deviceId) {
           setAuthority(undefined);
           setCashierPin(undefined);
+          setCashShift(undefined);
           setMessage(
             "Register this browser as a POS device before refreshing offline authority.",
           );
           return;
         }
-        const cached = await cachedOfflineAuthority({
+        const scope = {
           companyId: nextCompanyId,
           branchId: nextBranchId,
           deviceId: storedDevice.deviceId,
           cashierUserId: currentUserId,
-        });
+        };
+        const [cached, cachedPin, cachedShift] = await Promise.all([
+          cachedOfflineAuthority(scope),
+          cachedCashierPin(scope),
+          cachedCashShift(scope),
+        ]);
         setAuthority(cached);
-        const cachedPin = await cachedCashierPin({
-          companyId: nextCompanyId,
-          branchId: nextBranchId,
-          deviceId: storedDevice.deviceId,
-          cashierUserId: currentUserId,
-        });
         setCashierPin(cachedPin);
+        setCashShift(cachedShift);
+        try {
+          const current = await request<CachedCashShift | null>(
+            `/companies/${nextCompanyId}/branches/${nextBranchId}/pos/shifts/current`,
+          );
+          if (!current) {
+            await clearCachedCashShift(scope);
+            setCashShift(undefined);
+          } else {
+            setCashShift(current);
+            if (current.deviceId === scope.deviceId)
+              await cacheCashShift(scope, current);
+          }
+        } catch {
+          // A cached server-confirmed shift remains available during an outage.
+        }
         setMessage(
           cached
             ? `Offline authority is ready until ${formatTimestamp(cached.expiresAt)}.`
@@ -138,6 +171,7 @@ export default function PosAccessPage() {
         setDevice(undefined);
         setAuthority(undefined);
         setCashierPin(undefined);
+        setCashShift(undefined);
         setMessage(
           error instanceof Error
             ? error.message
@@ -200,7 +234,7 @@ export default function PosAccessPage() {
       });
       setAuthority(refreshed);
       setMessage(
-        `Offline authority is ready until ${formatTimestamp(refreshed.expiresAt)}. Cashier unlock and cash shift are still required before sales.`,
+        `Offline authority is ready until ${formatTimestamp(refreshed.expiresAt)}. Cashier unlock and an open shift are required before sales.`,
       );
     } catch (error) {
       setMessage(
@@ -275,7 +309,7 @@ export default function PosAccessPage() {
             : current,
         );
         setMessage(
-          `Cashier PIN verified locally until ${formatTimestamp(result.expiresAt)}. A cash shift is still required before sales.`,
+          `Cashier PIN verified locally until ${formatTimestamp(result.expiresAt)}. Open a cash shift online before sales.`,
         );
       } else if (result.status === "locked") {
         setCashierPin((current) =>
@@ -309,6 +343,45 @@ export default function PosAccessPage() {
     }
   }
 
+  async function openCashShift(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const scope = offlineScope();
+    if (!scope || !authority || !cashierUnlocked) {
+      setMessage(
+        "Refresh offline authority and verify the cashier PIN before opening a shift.",
+      );
+      return;
+    }
+    setShiftSubmitting(true);
+    try {
+      const response = await request<CommandResponse<CachedCashShift>>(
+        `/companies/${scope.companyId}/branches/${scope.branchId}/pos/shifts`,
+        {
+          method: "POST",
+          headers: commandHeaders(),
+          body: JSON.stringify({
+            deviceId: scope.deviceId,
+            openingFloat,
+          }),
+        },
+      );
+      const opened = await cacheCashShift(scope, response.data);
+      setCashShift(opened);
+      setOpeningFloat("");
+      setMessage(
+        `Cash shift opened with ${opened.currencyCode} ${opened.openingFloat}. Checkout remains unavailable until the POS outbox and checkout slice are implemented.`,
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not open the cash shift.",
+      );
+    } finally {
+      setShiftSubmitting(false);
+    }
+  }
+
   function selectCompany(nextCompanyId: string) {
     const nextBranch = branches.find(
       (branch) => branch.companyId === nextCompanyId,
@@ -318,6 +391,7 @@ export default function PosAccessPage() {
     setDevice(undefined);
     setAuthority(undefined);
     setCashierPin(undefined);
+    setCashShift(undefined);
     setLocalSessionExpiresAt("");
     if (nextBranch)
       void loadAuthority(nextCompanyId, nextBranch.branchId, userId);
@@ -328,6 +402,7 @@ export default function PosAccessPage() {
     setDevice(undefined);
     setAuthority(undefined);
     setCashierPin(undefined);
+    setCashShift(undefined);
     setLocalSessionExpiresAt("");
     void loadAuthority(companyId, nextBranchId, userId);
   }
@@ -447,18 +522,35 @@ export default function PosAccessPage() {
           <article>
             <span>Cashier unlock</span>
             <strong>
-              {localSessionExpiresAt
+              {cashierUnlocked
                 ? "Unlocked"
                 : cashierPin
                   ? "PIN ready"
                   : "Not set"}
             </strong>
             <small>
-              {localSessionExpiresAt
+              {cashierUnlocked
                 ? `Session ends ${formatTimestamp(localSessionExpiresAt)}`
                 : cashierPin
                   ? "Enter PIN to start a bounded local session"
                   : "Set a PIN online on this browser device"}
+            </small>
+          </article>
+          <article>
+            <span>Cash shift</span>
+            <strong>
+              {cashShiftOnThisDevice
+                ? "Open"
+                : cashShift
+                  ? "Open elsewhere"
+                  : "Not open"}
+            </strong>
+            <small>
+              {cashShiftOnThisDevice && cashShift
+                ? `${cashShift.currencyCode} ${cashShift.openingFloat} opening float`
+                : cashShift
+                  ? "Close the active shift on its registered device first"
+                  : "Open online after local cashier unlock"}
             </small>
           </article>
         </section>
@@ -618,6 +710,85 @@ export default function PosAccessPage() {
                 </form>
               )}
             </div>
+
+            <div className="panel-stack">
+              <div>
+                <p className="eyebrow">Cash shift</p>
+                <h3>
+                  {cashShiftOnThisDevice
+                    ? "Cash accountability is active"
+                    : "Open this device's cash shift"}
+                </h3>
+              </div>
+              {cashShiftOnThisDevice && cashShift ? (
+                <div className="device-trust-state">
+                  <ShieldCheck aria-hidden="true" size={24} />
+                  <div>
+                    <strong>
+                      Opened {formatTimestamp(cashShift.openedAt)} with{" "}
+                      {cashShift.currencyCode} {cashShift.openingFloat}.
+                    </strong>
+                    <p>
+                      This encrypted local copy identifies the active cash
+                      shift. Its opening float is a custody amount, not a
+                      journal entry or sale.
+                    </p>
+                  </div>
+                </div>
+              ) : cashShift ? (
+                <div className="inline-alert">
+                  <CircleAlert aria-hidden="true" size={18} />
+                  <div>
+                    <strong>An active shift exists on another device.</strong>
+                    <p>
+                      Close that shift before this cashier opens another. A
+                      cashier cannot own two active tills.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <form className="stack compact" onSubmit={openCashShift}>
+                  <label>
+                    Opening float (company base currency)
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      value={openingFloat}
+                      onChange={(event) => setOpeningFloat(event.target.value)}
+                      pattern="(?:0|[1-9][0-9]{0,11})(?:\\.[0-9]{1,2})?"
+                      placeholder="0.00"
+                      required
+                      disabled={
+                        shiftSubmitting ||
+                        !authority ||
+                        !cashierUnlocked ||
+                        device?.state !== "registered"
+                      }
+                    />
+                  </label>
+                  <p className="form-help">
+                    Opens online in the company base currency. A new offline
+                    shift cannot be started until the encrypted POS outbox is
+                    implemented.
+                  </p>
+                  <button
+                    className="secondary"
+                    disabled={
+                      shiftSubmitting ||
+                      !authority ||
+                      !cashierUnlocked ||
+                      device?.state !== "registered"
+                    }
+                  >
+                    <ShieldCheck size={18} />
+                    {shiftSubmitting
+                      ? "Opening cash shift..."
+                      : "Open cash shift"}
+                  </button>
+                </form>
+              )}
+            </div>
           </article>
 
           <article className="panel">
@@ -636,12 +807,15 @@ export default function PosAccessPage() {
                 The authority is limited to the configured offline window.
               </li>
               <li>It is limited to the assigned cashier and branch.</li>
-              <li>Cashier PIN unlock and a cash shift remain required.</li>
+              <li>
+                A verified cashier PIN and one server-recorded cash shift are
+                required before checkout.
+              </li>
             </ol>
             <p className="form-help">
-              This is a trust and recovery milestone, not a checkout screen.
-              Offline sales stay unavailable until the cashier unlock and shift
-              controls are implemented.
+              The shift opening is online and auditable. This is not a checkout
+              screen: offline sales stay unavailable until the encrypted outbox
+              and checkout controls are implemented.
             </p>
           </article>
         </section>
@@ -649,8 +823,8 @@ export default function PosAccessPage() {
         <section className="notice device-next-step">
           <ShieldCheck aria-hidden="true" size={18} />
           <span>
-            Next: set and verify a cashier POS PIN, enforce local unlock limits,
-            and create the cash-shift lifecycle before enabling sales.
+            Next: add the encrypted POS outbox and offline checkout, then
+            synchronize accepted sales into inventory and accounting.
           </span>
         </section>
       </section>

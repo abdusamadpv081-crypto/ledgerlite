@@ -81,7 +81,7 @@ function authorityId(scope: OfflineAuthorityScope): string {
   return `${scope.companyId}:${scope.branchId}:${scope.deviceId}:${scope.cashierUserId}`;
 }
 function recordAad(
-  type: "authority" | "attempt" | "cashier-pin",
+  type: "authority" | "attempt" | "cashier-pin" | "cashier-shift",
   scope: OfflineAuthorityScope,
 ): ArrayBuffer {
   return arrayBuffer(
@@ -288,7 +288,7 @@ async function cacheEncryptionKey(browserCrypto: Crypto): Promise<CryptoKey> {
 }
 export async function encryptOfflinePosCache(
   browserCrypto: Crypto,
-  type: "authority" | "attempt" | "cashier-pin",
+  type: "authority" | "attempt" | "cashier-pin" | "cashier-shift",
   scope: OfflineAuthorityScope,
   payload: unknown,
 ): Promise<EncryptedPosCachePayload> {
@@ -311,7 +311,7 @@ export async function encryptOfflinePosCache(
 }
 export async function decryptOfflinePosCache<T>(
   browserCrypto: Crypto,
-  type: "authority" | "attempt" | "cashier-pin",
+  type: "authority" | "attempt" | "cashier-pin" | "cashier-shift",
   scope: OfflineAuthorityScope,
   record: EncryptedPosCachePayload,
 ): Promise<T> {
