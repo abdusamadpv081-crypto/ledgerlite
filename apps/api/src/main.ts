@@ -15,7 +15,10 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
   await app.register(cookie);
-  await app.enableCors({ origin: "http://localhost:3000" });
+  await app.enableCors({
+    credentials: true,
+    origin: "http://localhost:3000",
+  });
   app.setGlobalPrefix("api/v1");
 
   const openApi = new DocumentBuilder()

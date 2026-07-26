@@ -1,40 +1,311 @@
 @import "tailwindcss";
 
 :root {
+  --font-sans: Inter, "Noto Sans Arabic", "Segoe UI", Arial, sans-serif;
   --color-page: #f8fafc;
-  --color-surface: #ffffff;
+  --color-surface: #fff;
   --color-text: #0f172a;
   --color-text-muted: #475569;
+  --color-border: #cbd5e1;
   --color-action-primary: #1d4ed8;
+  --color-action-primary-hover: #1e40af;
+  --color-focus: #2563eb;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 8%);
 }
-
 * {
   box-sizing: border-box;
 }
-
 body {
   margin: 0;
   background: var(--color-page);
   color: var(--color-text);
-  font-family: Inter, "Noto Sans Arabic", "Segoe UI", Arial, sans-serif;
+  font-family: var(--font-sans);
 }
-
-main {
-  max-width: 48rem;
-  padding: 4rem 1.5rem;
+button,
+input,
+select {
+  font: inherit;
 }
-h1 {
-  max-width: 40rem;
-  font-size: clamp(2rem, 5vw, 3.75rem);
-  line-height: 1.08;
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr);
 }
-p {
-  color: var(--color-text-muted);
-  font-size: 1.05rem;
+.sidebar {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: 700;
+}
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  background: #2563eb;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+}
+nav {
+  display: grid;
+  gap: var(--space-2);
+}
+nav a {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding: 0.7rem 0.75rem;
+  color: #cbd5e1;
+  text-decoration: none;
+  border-radius: var(--radius-md);
+}
+nav a:hover,
+nav .nav-active {
+  background: #1e293b;
+  color: #fff;
+}
+.sidebar-note {
+  margin-top: auto;
+  color: #94a3b8;
+  font-size: 0.75rem;
   line-height: 1.6;
 }
+.workspace {
+  max-width: 100rem;
+  width: 100%;
+  padding: var(--space-8);
+  margin: auto;
+}
+.topbar,
+.panel-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  align-items: flex-start;
+}
 .eyebrow {
-  color: var(--color-action-primary);
+  margin: 0 0 0.25rem;
+  color: #1d4ed8;
+  font-size: 0.75rem;
   font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+.topbar h1,
+.panel h2 {
+  margin: 0;
+  line-height: 1.2;
+}
+.topbar h1 {
+  font-size: 1.875rem;
+}
+.panel h2 {
+  font-size: 1.25rem;
+}
+.company-select {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.company-select select {
+  min-width: 14rem;
+}
+.status {
+  color: var(--color-text-muted);
+  min-height: 1.5rem;
+}
+.summary-grid,
+.content-grid {
+  display: grid;
+  gap: var(--space-4);
+  margin-block: var(--space-6);
+}
+.summary-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+.summary-grid article,
+.panel,
+.notice {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.summary-grid article {
+  padding: var(--space-4);
+  display: grid;
+  gap: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+.summary-grid strong {
+  color: var(--color-text);
+  font-size: 1.5rem;
+}
+.summary-grid small,
+td small {
+  font-size: 0.75rem;
+}
+.content-grid {
+  grid-template-columns: minmax(0, 1.3fr) minmax(18rem, 0.7fr);
+}
+.panel {
+  padding: var(--space-6);
+}
+.panel-heading {
+  margin-bottom: var(--space-6);
+}
+.stack {
+  display: grid;
+  gap: var(--space-4);
+}
+.compact {
+  gap: var(--space-3);
+}
+label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+.two-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+input,
+select {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.7rem;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+}
+input:focus,
+select:focus,
+button:focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 2px;
+}
+button {
+  min-height: 2.75rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.9rem;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.primary {
+  background: var(--color-action-primary);
+  color: #fff;
+}
+.primary:hover {
+  background: var(--color-action-primary-hover);
+}
+.secondary,
+.icon-button {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+.icon-button {
+  min-width: 2.75rem;
+  padding: 0;
+}
+button:disabled,
+input:disabled,
+select:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.notice {
+  padding: var(--space-4);
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+.table-panel {
+  margin-top: var(--space-6);
+}
+.table-wrap {
+  overflow: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+th,
+td {
+  padding: var(--space-3);
+  text-align: start;
+  border-bottom: 1px solid var(--color-border);
+}
+th {
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+td small {
+  display: block;
+  color: var(--color-text-muted);
+  margin-top: 0.2rem;
+}
+.numeric {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 800px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    padding: var(--space-4);
+    gap: var(--space-3);
+  }
+  .sidebar nav {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .sidebar-note {
+    display: none;
+  }
+  .workspace {
+    padding: var(--space-4);
+  }
+  .topbar,
+  .content-grid {
+    display: grid;
+  }
+  .summary-grid,
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+  .company-select select {
+    min-width: 0;
+  }
+  .panel {
+    padding: var(--space-4);
+  }
 }

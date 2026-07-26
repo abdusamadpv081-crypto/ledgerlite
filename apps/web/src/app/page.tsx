@@ -1,184 +1,413 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { PackagePlus, Plus, RefreshCw, Store, Tags } from "lucide-react";
 
 const apiUrl =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
-
-type Tax = { id: string; code: string; name: string; rate: number };
+type Company = {
+  companyId: string;
+  legalName: string;
+  tradeName: string | null;
+  roles: string[];
+};
+type Tax = { id: string; code: string; name: string; rate: string };
 type Product = {
   id: string;
   sku: string | null;
   name: string;
-  unit_price: string | null;
+  productKind: "stock" | "service";
+  unitPrice: string;
+  currency: string;
+  taxTreatment: "inclusive" | "exclusive";
+  taxCode: Tax | null;
 };
-type Catalog = { taxes: Tax[]; products: Product[] };
+type Catalogue = { taxCodes: Tax[]; products: Product[] };
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${apiUrl}${path}`, init);
+  const response = await fetch(`${apiUrl}${path}`, {
+    credentials: "include",
+    ...init,
+  });
   const body: unknown = await response.json().catch(() => undefined);
-
-  if (!response.ok) {
-    const message =
+  if (!response.ok)
+    throw new Error(
       typeof body === "object" &&
-      body !== null &&
-      "message" in body &&
-      typeof body.message === "string"
+        body !== null &&
+        "message" in body &&
+        typeof body.message === "string"
         ? body.message
-        : `Request failed with status ${response.status}.`;
-    throw new Error(message);
-  }
-
+        : `Request failed (${response.status}).`,
+    );
   return body as T;
+}
+function commandHeaders() {
+  return {
+    "content-type": "application/json",
+    "idempotency-key": crypto.randomUUID(),
+  };
+}
+function money(product: Product) {
+  return new Intl.NumberFormat("en-AE", {
+    style: "currency",
+    currency: product.currency,
+  }).format(Number(product.unitPrice));
 }
 
 export default function HomePage() {
+  const [companies, setCompanies] = useState<Company[]>([]);
   const [companyId, setCompanyId] = useState("");
-  const [taxes, setTaxes] = useState<Tax[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [message, setMessage] = useState("Preparing development catalogue...");
-
-  async function refresh(tenantId = companyId) {
-    const data = await request<Catalog>(
-      `/development/catalog?companyId=${tenantId}`,
-    );
-    setTaxes(data.taxes);
-    setProducts(data.products);
+  const [catalogue, setCatalogue] = useState<Catalogue>({
+    taxCodes: [],
+    products: [],
+  });
+  const [message, setMessage] = useState("Checking your signed-in workspace…");
+  const [loading, setLoading] = useState(true);
+  const company = useMemo(
+    () => companies.find((item) => item.companyId === companyId),
+    [companies, companyId],
+  );
+  const canManage = company?.roles.includes("owner") ?? false;
+  async function loadCatalog(id = companyId) {
+    if (!id) return;
+    setLoading(true);
+    try {
+      setCatalogue(await request<Catalogue>(`/companies/${id}/catalog`));
+      setMessage("Catalogue is up to date.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not load the catalogue.",
+      );
+    } finally {
+      setLoading(false);
+    }
   }
-
   useEffect(() => {
     void (async () => {
-      const data = await request<{ companyId: string; branchId: string }>(
-        "/development/catalog/bootstrap",
-        { method: "POST" },
-      );
-      setCompanyId(data.companyId);
-      await refresh(data.companyId);
-      setMessage("Development tenant ready.");
-    })().catch(() =>
-      setMessage(
-        "Could not reach the local development API. Enable the catalogue demo and start the API on port 3001.",
-      ),
-    );
+      try {
+        const contexts = await request<Company[]>("/auth/companies");
+        setCompanies(contexts);
+        const initial = contexts[0]?.companyId ?? "";
+        setCompanyId(initial);
+        if (!initial)
+          setMessage(
+            "No active company workspace is assigned to this account.",
+          );
+        else await loadCatalog(initial);
+      } catch {
+        setMessage("Sign in to access an assigned Ledger Lite workspace.");
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
-
   async function createTax(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     try {
-      await request("/development/catalog/taxes", {
+      await request(`/companies/${companyId}/catalog/tax-codes`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: commandHeaders(),
         body: JSON.stringify({
-          companyId,
           code: form.get("code"),
           name: form.get("name"),
-          rate: Number(form.get("rate")) / 100,
+          rate: String(Number(form.get("rate")) / 100),
         }),
       });
       event.currentTarget.reset();
-      await refresh();
-      setMessage("Tax code saved.");
+      await loadCatalog();
+      setMessage("Tax code created.");
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Could not save tax code.",
+        error instanceof Error ? error.message : "Could not create tax code.",
       );
     }
   }
-
   async function createProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     try {
-      await request("/development/catalog/products", {
+      await request(`/companies/${companyId}/catalog/products`, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: commandHeaders(),
         body: JSON.stringify({
-          companyId,
-          sku: form.get("sku") || undefined,
+          sku: form.get("sku"),
           name: form.get("name"),
-          taxCodeId: form.get("taxCodeId") || undefined,
+          productKind: form.get("productKind"),
+          defaultTaxCodeId: form.get("taxCodeId") || undefined,
+          unitPrice: form.get("unitPrice"),
         }),
       });
       event.currentTarget.reset();
-      await refresh();
-      setMessage("Product saved.");
+      await loadCatalog();
+      setMessage("Product created with its first retail price.");
     } catch (error) {
       setMessage(
-        error instanceof Error ? error.message : "Could not save product.",
+        error instanceof Error ? error.message : "Could not create product.",
       );
     }
   }
-
   return (
-    <main>
-      <p className="eyebrow">Development catalogue</p>
-      <h1>Products ready for POS setup</h1>
-      <p aria-live="polite" role="status">
-        {message}
-      </p>
-      <section>
-        <h2>Tax codes</h2>
-        <form onSubmit={createTax}>
-          <input
-            aria-label="Tax code"
-            name="code"
-            placeholder="VAT5"
-            required
-          />
-          <input
-            aria-label="Tax name"
-            name="name"
-            placeholder="VAT 5%"
-            required
-          />
-          <input
-            aria-label="Tax rate percentage"
-            name="rate"
-            type="number"
-            step="0.001"
-            placeholder="5"
-            required
-          />
-          <button>Add tax code</button>
-        </form>
-        <ul>
-          {taxes.map((tax) => (
-            <li key={tax.id}>
-              {tax.code} - {tax.name} ({Number(tax.rate) * 100}%)
-            </li>
-          ))}
-        </ul>
-      </section>
-      <section>
-        <h2>Products</h2>
-        <form onSubmit={createProduct}>
-          <input aria-label="SKU" name="sku" placeholder="SKU" />
-          <input
-            aria-label="Product name"
-            name="name"
-            placeholder="Product name"
-            required
-          />
-          <select aria-label="Default tax code" name="taxCodeId">
-            <option value="">No tax code</option>
-            {taxes.map((tax) => (
-              <option key={tax.id} value={tax.id}>
-                {tax.code}
-              </option>
-            ))}
-          </select>
-          <button>Add product</button>
-        </form>
-        <ul>
-          {products.map((product) => (
-            <li key={product.id}>
-              {product.sku ? `${product.sku} - ` : ""}
-              {product.name}
-              {product.unit_price ? ` - AED ${product.unit_price}` : ""}
-            </li>
-          ))}
-        </ul>
+    <main className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <span className="brand-mark">LL</span>
+          <span>Ledger Lite</span>
+        </div>
+        <nav aria-label="Primary">
+          <a className="nav-active" href="#catalogue">
+            <Store size={18} />
+            Catalogue
+          </a>
+          <a href="#products">
+            <PackagePlus size={18} />
+            Products
+          </a>
+          <a href="#taxes">
+            <Tags size={18} />
+            Tax settings
+          </a>
+        </nav>
+        <p className="sidebar-note">
+          UAE retail pilot
+          <br />
+          Online back office
+        </p>
+      </aside>
+      <section className="workspace">
+        <header className="topbar">
+          <div>
+            <p className="eyebrow">Back office</p>
+            <h1>Product catalogue</h1>
+          </div>
+          <label className="company-select">
+            Company
+            <select
+              value={companyId}
+              onChange={(event) => {
+                setCompanyId(event.target.value);
+                void loadCatalog(event.target.value);
+              }}
+              aria-label="Active company"
+            >
+              {companies.map((item) => (
+                <option key={item.companyId} value={item.companyId}>
+                  {item.tradeName ?? item.legalName}
+                </option>
+              ))}
+            </select>
+          </label>
+        </header>
+        <p className="status" role="status" aria-live="polite">
+          {message}
+        </p>
+        {!canManage && companyId ? (
+          <section className="notice">
+            <strong>Read-only access.</strong> Your role can view catalogue data
+            but cannot change it.
+          </section>
+        ) : null}
+        <section id="catalogue" className="summary-grid">
+          <article>
+            <span>Active products</span>
+            <strong>{catalogue.products.length}</strong>
+          </article>
+          <article>
+            <span>Tax codes</span>
+            <strong>{catalogue.taxCodes.length}</strong>
+          </article>
+          <article>
+            <span>Price display</span>
+            <strong>Tax inclusive</strong>
+            <small>Default retail list</small>
+          </article>
+        </section>
+        <section className="content-grid">
+          <article className="panel" id="products">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">Create</p>
+                <h2>New product</h2>
+              </div>
+              <PackagePlus aria-hidden="true" />
+            </div>
+            <form className="stack" onSubmit={createProduct}>
+              <label>
+                Product name
+                <input
+                  name="name"
+                  required
+                  placeholder="e.g. Arabic coffee"
+                  disabled={!canManage}
+                />
+              </label>
+              <div className="two-columns">
+                <label>
+                  SKU
+                  <input
+                    name="sku"
+                    placeholder="Optional"
+                    disabled={!canManage}
+                  />
+                </label>
+                <label>
+                  Type
+                  <select
+                    name="productKind"
+                    defaultValue="stock"
+                    disabled={!canManage}
+                  >
+                    <option value="stock">Stock item</option>
+                    <option value="service">Service</option>
+                  </select>
+                </label>
+              </div>
+              <div className="two-columns">
+                <label>
+                  Retail price (AED)
+                  <input
+                    name="unitPrice"
+                    inputMode="decimal"
+                    pattern="\d+(\.\d{1,6})?"
+                    required
+                    placeholder="0.00"
+                    disabled={!canManage}
+                  />
+                </label>
+                <label>
+                  VAT code
+                  <select name="taxCodeId" disabled={!canManage}>
+                    <option value="">No VAT</option>
+                    {catalogue.taxCodes.map((tax) => (
+                      <option key={tax.id} value={tax.id}>
+                        {tax.code} · {tax.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <button className="primary" disabled={!canManage}>
+                <Plus size={18} />
+                Create product
+              </button>
+            </form>
+          </article>
+          <article className="panel" id="taxes">
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">Tax</p>
+                <h2>VAT codes</h2>
+              </div>
+              <Tags aria-hidden="true" />
+            </div>
+            <form className="stack compact" onSubmit={createTax}>
+              <div className="two-columns">
+                <label>
+                  Code
+                  <input
+                    name="code"
+                    required
+                    placeholder="VAT5"
+                    disabled={!canManage}
+                  />
+                </label>
+                <label>
+                  Rate (%)
+                  <input
+                    name="rate"
+                    inputMode="decimal"
+                    required
+                    placeholder="5"
+                    disabled={!canManage}
+                  />
+                </label>
+              </div>
+              <label>
+                Name
+                <input
+                  name="name"
+                  required
+                  placeholder="VAT 5%"
+                  disabled={!canManage}
+                />
+              </label>
+              <button className="secondary" disabled={!canManage}>
+                <Plus size={18} />
+                Add VAT code
+              </button>
+            </form>
+          </article>
+        </section>
+        <section className="panel table-panel">
+          <div className="panel-heading">
+            <div>
+              <p className="eyebrow">Current retail list</p>
+              <h2>Products ready for POS</h2>
+            </div>
+            <button
+              className="icon-button"
+              onClick={() => void loadCatalog()}
+              aria-label="Refresh catalogue"
+              disabled={loading}
+            >
+              <RefreshCw size={18} />
+            </button>
+          </div>
+          <div className="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>SKU</th>
+                  <th>Tax</th>
+                  <th className="numeric">Retail price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  <tr>
+                    <td colSpan={4}>Loading catalogue…</td>
+                  </tr>
+                ) : catalogue.products.length === 0 ? (
+                  <tr>
+                    <td colSpan={4}>
+                      No products yet. Create the first item above.
+                    </td>
+                  </tr>
+                ) : (
+                  catalogue.products.map((item) => (
+                    <tr key={item.id}>
+                      <td>
+                        <strong>{item.name}</strong>
+                        <small>
+                          {item.productKind === "stock"
+                            ? "Stock item"
+                            : "Service"}
+                        </small>
+                      </td>
+                      <td>{item.sku ?? "—"}</td>
+                      <td>
+                        {item.taxCode
+                          ? `${item.taxCode.code} (${Number(item.taxCode.rate) * 100}%)`
+                          : "No VAT"}
+                      </td>
+                      <td className="numeric">
+                        <strong>{money(item)}</strong>
+                        <small>
+                          {item.taxTreatment === "inclusive"
+                            ? "VAT inclusive"
+                            : "VAT added"}
+                        </small>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       </section>
     </main>
   );
