@@ -55,6 +55,17 @@ export type EncryptedOfflineAuthorityAttemptRecord = Readonly<{
   initializationVector: ArrayBuffer;
   updatedAt: string;
 }>;
+export type EncryptedCashierPinRecord = Readonly<{
+  id: string;
+  companyId: string;
+  branchId: string;
+  deviceId: string;
+  cashierUserId: string;
+  pinVersion: number;
+  encryptedPayload: ArrayBuffer;
+  initializationVector: ArrayBuffer;
+  updatedAt: string;
+}>;
 
 export class PosDeviceDatabase extends Dexie {
   devices!: Table<LocalPosDevice, string>;
@@ -64,6 +75,7 @@ export class PosDeviceDatabase extends Dexie {
     EncryptedOfflineAuthorityAttemptRecord,
     string
   >;
+  cashierPins!: Table<EncryptedCashierPinRecord, string>;
 
   constructor() {
     super("ledgerlite-pos");
@@ -77,6 +89,16 @@ export class PosDeviceDatabase extends Dexie {
         "&id, companyId, branchId, deviceId, cashierUserId, expiresAt, updatedAt",
       offlineAuthorityAttempts:
         "&id, companyId, branchId, deviceId, cashierUserId, updatedAt",
+    });
+    this.version(3).stores({
+      devices: "&id, companyId, branchId, state, deviceId, updatedAt",
+      cacheKeys: "&id, createdAt",
+      offlineAuthorities:
+        "&id, companyId, branchId, deviceId, cashierUserId, expiresAt, updatedAt",
+      offlineAuthorityAttempts:
+        "&id, companyId, branchId, deviceId, cashierUserId, updatedAt",
+      cashierPins:
+        "&id, companyId, branchId, deviceId, cashierUserId, pinVersion, updatedAt",
     });
   }
 }

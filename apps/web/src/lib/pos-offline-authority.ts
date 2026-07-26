@@ -60,7 +60,7 @@ type GrantIssueResponse = Readonly<{
     token: string;
   }>;
 }>;
-type EncryptedPayload = Readonly<{
+export type EncryptedPosCachePayload = Readonly<{
   encryptedPayload: ArrayBuffer;
   initializationVector: ArrayBuffer;
 }>;
@@ -81,7 +81,7 @@ function authorityId(scope: OfflineAuthorityScope): string {
   return `${scope.companyId}:${scope.branchId}:${scope.deviceId}:${scope.cashierUserId}`;
 }
 function recordAad(
-  type: "authority" | "attempt",
+  type: "authority" | "attempt" | "cashier-pin",
   scope: OfflineAuthorityScope,
 ): ArrayBuffer {
   return arrayBuffer(
@@ -286,12 +286,12 @@ async function cacheEncryptionKey(browserCrypto: Crypto): Promise<CryptoKey> {
     throw new Error("Could not create the encrypted POS authority cache.");
   }
 }
-async function encrypt(
+export async function encryptOfflinePosCache(
   browserCrypto: Crypto,
-  type: "authority" | "attempt",
+  type: "authority" | "attempt" | "cashier-pin",
   scope: OfflineAuthorityScope,
   payload: unknown,
-): Promise<EncryptedPayload> {
+): Promise<EncryptedPosCachePayload> {
   const initializationVector = browserCrypto.getRandomValues(
     new Uint8Array(12),
   );
@@ -309,11 +309,11 @@ async function encrypt(
     initializationVector: arrayBuffer(initializationVector),
   };
 }
-async function decrypt<T>(
+export async function decryptOfflinePosCache<T>(
   browserCrypto: Crypto,
-  type: "authority" | "attempt",
+  type: "authority" | "attempt" | "cashier-pin",
   scope: OfflineAuthorityScope,
-  record: EncryptedPayload,
+  record: EncryptedPosCachePayload,
 ): Promise<T> {
   try {
     const decrypted = await browserCrypto.subtle.decrypt(
@@ -363,7 +363,7 @@ async function loadAttempt(
   );
   if (!record) return undefined;
   try {
-    const attempt = await decrypt<unknown>(
+    const attempt = await decryptOfflinePosCache<unknown>(
       browserCrypto,
       "attempt",
       scope,
@@ -381,7 +381,12 @@ async function storeAttempt(
   scope: OfflineAuthorityScope,
   attempt: PendingAttempt,
 ): Promise<void> {
-  const encrypted = await encrypt(browserCrypto, "attempt", scope, attempt);
+  const encrypted = await encryptOfflinePosCache(
+    browserCrypto,
+    "attempt",
+    scope,
+    attempt,
+  );
   const record: EncryptedOfflineAuthorityAttemptRecord = {
     id: authorityId(scope),
     companyId: scope.companyId,
@@ -527,11 +532,16 @@ export async function refreshOfflineAuthority(input: {
     scope,
   );
   assertIssuedResponse(issued, verified);
-  const encrypted = await encrypt(browserCrypto, "authority", scope, {
-    version: 1,
-    token: issued.data.token,
-    verificationKey,
-  } satisfies StoredAuthorityPayload);
+  const encrypted = await encryptOfflinePosCache(
+    browserCrypto,
+    "authority",
+    scope,
+    {
+      version: 1,
+      token: issued.data.token,
+      verificationKey,
+    } satisfies StoredAuthorityPayload,
+  );
   const record: EncryptedOfflineAuthorityRecord = {
     id: authorityId(scope),
     companyId: scope.companyId,
@@ -569,7 +579,7 @@ export async function cachedOfflineAuthority(
     return undefined;
   }
   try {
-    const payload = await decrypt<unknown>(
+    const payload = await decryptOfflinePosCache<unknown>(
       browserCrypto,
       "authority",
       scope,
