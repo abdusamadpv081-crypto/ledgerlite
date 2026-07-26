@@ -49,6 +49,29 @@ Each accepted change writes immutable audit evidence (`company.updated`,
 cannot be closed by this general update route; closing will be a later
 controlled lifecycle command after device, shift, and stock safeguards exist.
 
+## Catalogue management
+
+The initial catalogue workspace is company-scoped and is intended for the
+pilot owner who maintains the shared product master. Branch availability is a
+separate branch-scoped command, so an assigned branch manager can be
+authorized only for that branch's sellability and reorder controls.
+
+| Route                                                                                           | Capability       | Purpose                                                                                                |
+| ----------------------------------------------------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------ |
+| `GET /api/v1/companies/:companyId/catalog`                                                      | `catalog.manage` | Read active, POS-ready products, tax codes, current prices, and active barcodes.                       |
+| `POST /api/v1/companies/:companyId/catalog/tax-codes`                                           | `catalog.manage` | Create an active tax code.                                                                             |
+| `POST /api/v1/companies/:companyId/catalog/products`                                            | `catalog.manage` | Create a product and its first effective price in the named price list.                                |
+| `PATCH /api/v1/companies/:companyId/catalog/products/:productId`                                | `catalog.manage` | Change master data, replace the current price, or deactivate/reactivate a product without deleting it. |
+| `POST /api/v1/companies/:companyId/catalog/products/:productId/barcodes`                        | `catalog.manage` | Assign a unique company-wide barcode to a product.                                                     |
+| `POST /api/v1/companies/:companyId/catalog/branches/:branchId/products/:productId/availability` | `catalog.manage` | Set sellability and optional reorder point for the permitted branch.                                   |
+
+All catalogue commands require an `Idempotency-Key`, write immutable audit
+evidence with the command correlation ID, and execute under tenant RLS. Product
+updates require `expectedUpdatedAt` from the immediately preceding read. A
+price replacement closes the preceding current price row and inserts a new
+effective-dated row; it never overwrites a price that may be needed by a
+historical sale or journal.
+
 ## POS sync endpoint contract
 
 **Proposed endpoint:** `POST /api/v1/pos/sync/events`
