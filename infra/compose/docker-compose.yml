@@ -15,6 +15,23 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.7.0
+    profiles:
+      - local-oidc
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${LOCAL_OIDC_ADMIN_USERNAME:-}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${LOCAL_OIDC_ADMIN_PASSWORD:-}
+      LOCAL_OIDC_CLIENT_SECRET: ${LOCAL_OIDC_CLIENT_SECRET:-}
+      LOCAL_OIDC_OWNER_PASSWORD: ${LOCAL_OIDC_OWNER_PASSWORD:-}
+      LOCAL_OIDC_CASHIER_PASSWORD: ${LOCAL_OIDC_CASHIER_PASSWORD:-}
+    ports:
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
 
 volumes:
   postgres-data:

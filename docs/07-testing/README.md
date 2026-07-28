@@ -21,6 +21,10 @@ functional testing needs a non-production OIDC client and assisted-provisioned
 test users. Do not create a development login bypass or insert test data
 directly into tenant tables.
 
+For a self-contained local environment, use the
+[local Keycloak setup](local-keycloak-setup.md). It is an HTTP, loopback-only,
+development profile—not a pilot or production identity-provider design.
+
 Prepare these test identities through the documented operator process:
 
 | Identity              | Minimum role                   | Used for                                                                      |

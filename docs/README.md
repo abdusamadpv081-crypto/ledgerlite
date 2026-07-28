@@ -18,6 +18,7 @@
 | [Cash-shift acceptance](06-delivery/cash-shift-opening-acceptance.md)       | Manual test script for an auditable cashier opening float.                 |
 | [Manual tester guide](06-delivery/manual-tester-guide.md)                   | Current feature coverage, setup, exploratory tests, and boundaries.        |
 | [Testing hub](07-testing/README.md)                                         | Tester index and dedicated scripts for implemented slices.                 |
+| [Local OIDC testing](07-testing/local-keycloak-setup.md)                    | Loopback-only Keycloak profile for authenticated local manual testing.     |
 | [Repository review](06-delivery/repository-review-2026-07-25.md)            | Review evidence, resolved findings, and remediation order.                 |
 
 ## Working agreement

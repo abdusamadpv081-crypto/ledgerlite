@@ -1,0 +1,60 @@
+{
+  "realm": "ledgerlite-local",
+  "displayName": "Ledger Lite Local Testing",
+  "enabled": true,
+  "loginWithEmailAllowed": true,
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "clients": [
+    {
+      "clientId": "ledgerlite-web",
+      "name": "Ledger Lite local web",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${LOCAL_OIDC_CLIENT_SECRET}",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:3001/api/v1/auth/callback"],
+      "webOrigins": ["http://localhost:3000"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "users": [
+    {
+      "id": "10000000-0000-4000-8000-000000000001",
+      "username": "owner@ledgerlite.local",
+      "email": "owner@ledgerlite.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Local",
+      "lastName": "Owner",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${LOCAL_OIDC_OWNER_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    },
+    {
+      "id": "10000000-0000-4000-8000-000000000002",
+      "username": "cashier@ledgerlite.local",
+      "email": "cashier@ledgerlite.local",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Local",
+      "lastName": "Cashier",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "${LOCAL_OIDC_CASHIER_PASSWORD}",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}
