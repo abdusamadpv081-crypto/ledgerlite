@@ -117,7 +117,10 @@ function base64UrlBytes(value: string): Uint8Array {
     .replace(/_/g, "/")
     .padEnd(Math.ceil(value.length / 4) * 4, "=");
   const binary = atob(padded);
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  if (base64Url(bytes) !== value)
+    throw new Error("Offline authority token uses invalid base64url encoding.");
+  return bytes;
 }
 function object(value: unknown, message: string): Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value))

@@ -19,6 +19,25 @@ function base64Url(value: Uint8Array | string): string {
   return Buffer.from(value).toString("base64url");
 }
 
+function tamperSignature(token: string): string {
+  const [header, payload, encodedSignature] = token.split(".");
+  const signature = Buffer.from(encodedSignature, "base64url");
+  signature[0] ^= 1;
+  return `${header}.${payload}.${base64Url(signature)}`;
+}
+
+function nonCanonicalSignature(token: string): string {
+  const alphabet =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  const [header, payload, encodedSignature] = token.split(".");
+  const last = encodedSignature.at(-1);
+  if (!last) throw new Error("Token signature is missing.");
+  const index = alphabet.indexOf(last);
+  if (index < 0) throw new Error("Token signature is invalid.");
+  const changed = alphabet[(index & 0b110000) | ((index + 1) & 0b001111)];
+  return `${header}.${payload}.${encodedSignature.slice(0, -1)}${changed}`;
+}
+
 async function signedAuthority(): Promise<{
   token: string;
   verificationKey: OfflineAuthorityVerificationKey;
@@ -85,7 +104,7 @@ describe("offline authority verification", () => {
 
   it("rejects a tampered token and a token for a different cashier", async () => {
     const signed = await signedAuthority();
-    const tampered = `${signed.token.slice(0, -1)}${signed.token.endsWith("A") ? "B" : "A"}`;
+    const tampered = tamperSignature(signed.token);
 
     await expect(
       verifyOfflineAuthorityToken(
@@ -103,6 +122,19 @@ describe("offline authority verification", () => {
         { ...scope, cashierUserId: "3e3e9195-2cb8-48c5-8a9d-6c629b15bb90" },
       ),
     ).rejects.toThrow("does not match");
+  });
+
+  it("rejects a non-canonical base64url signature encoding", async () => {
+    const signed = await signedAuthority();
+
+    await expect(
+      verifyOfflineAuthorityToken(
+        webcrypto as unknown as Crypto,
+        nonCanonicalSignature(signed.token),
+        signed.verificationKey,
+        scope,
+      ),
+    ).rejects.toThrow("invalid base64url");
   });
 });
 
