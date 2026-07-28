@@ -243,6 +243,12 @@ button {
   background: var(--color-action-primary);
   color: #fff;
 }
+.button-link {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+  text-decoration: none;
+}
 .primary:hover {
   background: var(--color-action-primary-hover);
 }

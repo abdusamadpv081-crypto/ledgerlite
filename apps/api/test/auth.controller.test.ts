@@ -110,7 +110,7 @@ describe("AuthController", () => {
       },
       value: "opaque-session-token",
     });
-    expect(reply.redirectUrl).toBe("/pos");
+    expect(reply.redirectUrl).toBe("http://localhost:3000/pos");
   });
 
   it("invalidates the presented session and clears the host cookie on logout", async () => {

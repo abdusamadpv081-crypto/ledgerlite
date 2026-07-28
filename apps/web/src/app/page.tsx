@@ -10,7 +10,7 @@ import {
   Tags,
   WifiOff,
 } from "lucide-react";
-import { commandHeaders, request } from "../lib/api";
+import { commandHeaders, loginUrl, request } from "../lib/api";
 type Company = {
   companyId: string;
   legalName: string;
@@ -82,6 +82,7 @@ export default function HomePage() {
   const [productDraft, setProductDraft] = useState<ProductDraft | null>(null);
   const [message, setMessage] = useState("Checking your signed-in workspace…");
   const [loading, setLoading] = useState(true);
+  const [signInRequired, setSignInRequired] = useState(false);
   const company = useMemo(
     () => companies.find((item) => item.companyId === companyId),
     [companies, companyId],
@@ -123,6 +124,7 @@ export default function HomePage() {
     void (async () => {
       try {
         const contexts = await request<Company[]>("/auth/companies");
+        setSignInRequired(false);
         setCompanies(contexts);
         const initial = contexts[0]?.companyId ?? "";
         setCompanyId(initial);
@@ -132,6 +134,7 @@ export default function HomePage() {
           );
         else await loadCatalog(initial);
       } catch {
+        setSignInRequired(true);
         setMessage("Sign in to access an assigned Ledger Lite workspace.");
       } finally {
         setLoading(false);
@@ -333,6 +336,11 @@ export default function HomePage() {
         <p className="status" role="status" aria-live="polite">
           {message}
         </p>
+        {signInRequired ? (
+          <a className="primary button-link" href={loginUrl("/")}>
+            Sign in to Ledger Lite
+          </a>
+        ) : null}
         {!canManage && companyId ? (
           <section className="notice">
             <strong>Read-only access.</strong> Your role can view catalogue data

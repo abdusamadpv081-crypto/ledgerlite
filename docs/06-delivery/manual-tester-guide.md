@@ -33,6 +33,8 @@ stopped, rebuild and run the API, then build and start the web application:
 
 ```powershell
 $env:DATABASE_URL = 'postgresql://ledgerlite:ledgerlite@localhost:5432/ledgerlite'
+$env:NODE_ENV = 'development'
+$env:WEB_APP_ORIGIN = 'http://localhost:3000'
 corepack pnpm --filter @ledgerlite/api build
 node apps/api/dist/main.js
 ```

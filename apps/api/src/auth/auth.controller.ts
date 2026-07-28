@@ -17,6 +17,37 @@ import { SESSION_COOKIE_NAME, sessionCookieOptions } from "./session-cookie.js";
 import type { AuthenticatedActor } from "./session.service.js";
 import { CompanyContextService } from "./company-context.service.js";
 
+function webApplicationReturnUrl(returnTo: string): string {
+  const configuredOrigin = process.env.WEB_APP_ORIGIN;
+  const isLocalEnvironment =
+    process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test";
+  const originValue =
+    configuredOrigin ??
+    (isLocalEnvironment ? "http://localhost:3000" : undefined);
+  if (!originValue)
+    throw new Error(
+      "WEB_APP_ORIGIN must be configured outside development and test environments.",
+    );
+  let origin: URL;
+  try {
+    origin = new URL(originValue);
+  } catch {
+    throw new Error("WEB_APP_ORIGIN must be an absolute URL.");
+  }
+  if (
+    origin.username ||
+    origin.password ||
+    origin.pathname !== "/" ||
+    origin.search ||
+    origin.hash ||
+    (!isLocalEnvironment && origin.protocol !== "https:")
+  )
+    throw new Error(
+      "WEB_APP_ORIGIN must be an HTTPS origin without credentials or a path outside development and test environments.",
+    );
+  return new URL(returnTo, origin).toString();
+}
+
 @Controller("auth")
 export class AuthController {
   constructor(
@@ -64,7 +95,7 @@ export class AuthController {
       ...sessionCookieOptions,
       expires: completed.session.expiresAt,
     });
-    await reply.redirect(completed.returnTo);
+    await reply.redirect(webApplicationReturnUrl(completed.returnTo));
   }
 
   @Post("logout")
