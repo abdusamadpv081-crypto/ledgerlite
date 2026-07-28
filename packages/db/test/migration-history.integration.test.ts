@@ -47,6 +47,7 @@ describe("database migration ledger", () => {
       "000024_allow_cashier_pin_self_read.sql",
       "000025_cash_shift_opening.sql",
       "000026_fix_cash_shift_online_event_uniqueness.sql",
+      "000027_pos_sale_sync.sql",
     ]);
     expect(
       result.rows.every((row) => /^[a-f0-9]{64}$/.test(row.checksum)),
