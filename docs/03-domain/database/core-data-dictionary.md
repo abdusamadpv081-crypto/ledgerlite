@@ -32,23 +32,22 @@ This is the release-one logical schema. Columns listed as `FK` must also preserv
 
 ## POS and synchronization
 
-| Table                 | Key fields                                                                                                                     | Notes                                                                      |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
-| `pos.sync_event`      | `id`, company/branch/device/cashier/shift FK, event type, local sequence, occurred time, policy version, payload, result state | Immutable idempotency anchor; unique `(company_id, device_id, id)`.        |
-| `pos.cash_shift`      | company/branch/device/cashier/policy FK, base currency, opening float, source, status, opened time                             | Immutable opening custody record; one active shift per device and cashier. |
-| `pos.sale`            | company/branch/shift FK, receipt number, source event FK, status, totals, currency, occurred time                              | Created only after accepted event; source event unique.                    |
-| `pos.sale_line`       | sale/product/tax FK, quantity, unit price, discount, tax, totals                                                               | Immutable commercial line snapshot.                                        |
-| `pos.payment_attempt` | sale FK, method, amount, currency, state, external reference, provider metadata                                                | Never includes cardholder data.                                            |
-| `pos.refund`          | original sale/source event FK, status, reason, totals                                                                          | Linked correction; no update of original sale.                             |
+| Table                 | Key fields                                                                                                                    | Notes                                                                                         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `pos.sale_event`      | `id`, company/branch/device/cashier/shift/grant/policy/journal FK, receipt ID, local sequence, event digest/signature, totals | Accepted device-signed cash sale; receipt and device/cashier sequence are unique per company. |
+| `pos.cash_shift`      | company/branch/device/cashier/policy FK, base currency, opening float, source, status, opened time                            | Immutable opening custody record; one active shift per device and cashier.                    |
+| `pos.sale_line`       | sale-event/product/tax FK, line number, product/SKU/tax snapshots, quantity, price, tax, totals                               | Immutable commercial line; `(sale_event_id, line_number)` is unique.                          |
+| `pos.payment_attempt` | planned: sale FK, method, amount, currency, state, external reference, provider metadata                                      | Future card/external-terminal evidence; never includes cardholder data.                       |
+| `pos.refund`          | planned: original sale/source event FK, status, reason, totals                                                                | Future linked correction; no update of original sale.                                         |
 
 ## Inventory
 
-| Table                          | Key fields                                                                                                               | Notes                                            |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
-| `inventory.location`           | company/branch FK, code, name, active                                                                                    | Initial default sellable location per branch.    |
-| `inventory.stock_movement`     | company/product/location/source-event FK, movement type, quantity delta, reason, occurred time, valuation policy version | Immutable quantity ledger.                       |
-| `inventory.valuation_movement` | product/company/source stock movement FK, quantity/value delta, unit cost, valuation policy version                      | Cost/value ledger; supports weighted average.    |
-| `inventory.stock_exception`    | source event/product/location FK, exception type, state, owner/reason                                                    | Negative/missing-cost/reconciliation exceptions. |
+| Table                          | Key fields                                                                                          | Notes                                                               |
+| ------------------------------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `inventory.location`           | company/branch FK, code, name, active                                                               | Initial default sellable location per branch.                       |
+| `inventory.stock_movement`     | company/branch/product/sale-line FK, movement type, quantity delta, occurred time                   | Immutable quantity ledger; US-032 currently appends sale movements. |
+| `inventory.valuation_movement` | product/company/source stock movement FK, quantity/value delta, unit cost, valuation policy version | Cost/value ledger; supports weighted average.                       |
+| `inventory.stock_exception`    | source event/product/location FK, exception type, state, owner/reason                               | Negative/missing-cost/reconciliation exceptions.                    |
 
 ## Accounting
 
@@ -72,8 +71,8 @@ This is the release-one logical schema. Columns listed as `FK` must also preserv
 
 ## Required unique/foreign-key rules
 
-- A `pos.sync_event.id` can produce at most one accepted sale/refund and one system journal-entry source link.
-- A POS receipt number is unique within its company; prefix/branch/display format is separate from the UUID identity.
+- A `pos.sale_event.id` can produce at most one accepted cash sale and one system journal-entry source link.
+- A POS local receipt ID is unique within its company; prefix/branch/display format is separate from the UUID identity.
 - Journal lines may only reference accounts in the same company as their journal.
 - Sale lines, stock movements, and journal lines retain product/account/tax descriptions needed for historical interpretation; later master-data edits do not rewrite history.
 - All references from a tenant-owned table to another tenant-owned table use same-company foreign-key validation or a database function/trigger that rejects mismatch.

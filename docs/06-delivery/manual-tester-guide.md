@@ -1,22 +1,22 @@
 # Manual tester guide
 
 **Audience:** a functional tester using a local Ledger Lite environment
-**Last verified:** 2026-07-26
+**Last verified:** 2026-07-28
 **Application:** web `http://localhost:3000` and API health
 `http://localhost:3001/api/v1/health`
 
 ## 1. What is ready to test
 
-| Area                       | Ready now                                                                                                          | Do not test as complete yet                                                  |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
-| Authentication and tenancy | OIDC session boundary, provisioned-user access, company and branch isolation                                       | Public signup, invitation workflow, password login                           |
-| Catalogue                  | Tax codes, products, prices, barcodes, branch availability                                                         | Receiving stock, stock adjustments, inventory valuation                      |
-| Accounting                 | Starter chart, accounts, fiscal periods, balanced manual journals                                                  | Financial statements, VAT return, automated POS journals                     |
-| POS preparation            | Browser-device registration, signed offline authority, cashier PIN, online shift opening and encrypted local cache | Checkout, sale receipt, POS outbox/sync, refunds, shift close, cash variance |
+| Area                       | Ready now                                                                                                     | Do not test as complete yet                                         |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Authentication and tenancy | OIDC session boundary, provisioned-user access, company and branch isolation                                  | Public signup, invitation workflow, password login                  |
+| Catalogue                  | Tax codes, products, prices, barcodes, branch availability                                                    | Receiving stock, stock adjustments, inventory valuation             |
+| Accounting                 | Starter chart, accounts, fiscal periods, balanced manual journals, and posted cash-sale journals after sync   | Financial statements, VAT return, COGS/inventory-value POS journals |
+| POS cash sale              | Offline checkout, signed encrypted outbox, intentional sync, and cash/revenue/VAT plus stock-quantity posting | UAE receipt, card payment, refund, COGS, shift close, cash variance |
 
-The last column is important: no user should be told that the current `/pos`
-page can take a sale. It is a secure POS preparation workspace, not a sales
-terminal yet.
+The `/pos` page can now capture a cash sale locally and synchronize it once
+connectivity returns. A row is authoritative only when it displays `Synced`;
+`Pending sync` and `Rejected` are not completed sales.
 
 ## 2. Local environment and access gate
 
@@ -60,7 +60,7 @@ Prepare at least these test identities:
 | Account             | Minimum role                                   | Purpose                                       |
 | ------------------- | ---------------------------------------------- | --------------------------------------------- |
 | Owner               | `owner` for the company                        | Catalogue, finance, company and device checks |
-| Cashier             | `cashier` scoped to the selected branch        | PIN and POS-shift checks                      |
+| Cashier             | `cashier` scoped to the selected branch        | PIN, POS shift, local cash sale, and sync     |
 | Optional manager    | `branch_manager` scoped to the selected branch | Device/POS operational checks                 |
 | Optional accountant | `accountant` for the company                   | Finance access and separation checks          |
 
@@ -156,14 +156,18 @@ network error for every failure.
      reload, and displays no sale/journal result;
    - opening a second active shift for the same cashier or device is rejected.
 4. While the `/pos` page remains open, disable network in browser developer
-   tools. Expected: the encrypted cached authority, PIN verifier, and already
-   opened shift remain visible. A browser reload while offline is not expected
-   to work yet because the offline PWA shell/outbox is not implemented.
+   tools. Expected: the encrypted cached authority, PIN verifier, opened shift,
+   catalogue, and local outbox remain available. Follow
+   [US-031 local-sale test](../07-testing/us-031-local-sale-outbox.md) and
+   [US-032 sale-sync test](../07-testing/us-032-sale-sync.md) for the complete
+   cash-sale scenario.
 
 ## 4. Expected limitations, not defects
 
-- There is no customer checkout, cash/card sale, receipt, outbox, or automatic
-  synchronization yet.
+- Cash sales sync only when the cashier explicitly selects **Sync sales**; a
+  pending or rejected event is not an authoritative sale.
+- There is no UAE receipt/invoice, card/external-terminal payment, refund, or
+  COGS/inventory-value POS posting yet.
 - No new shift can be opened while disconnected.
 - Shift close, cash counts, variance, and accounting postings are later work.
 - Arabic content/RTL user testing is not a release-ready feature yet.

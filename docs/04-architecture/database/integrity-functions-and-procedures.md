@@ -31,17 +31,16 @@ API role cannot read or write the operator record.
 
 ## Required database functions
 
-| Function                                                   | Responsibility                                                                                             |
-| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `platform.current_company_id()`                            | Reads/validates transaction tenant context for RLS/trigger use.                                            |
-| `platform.current_actor_id()`                              | Reads actor context for audit trigger/use case.                                                            |
-| `audit.write_event(...)`                                   | Appends validated audit event; strips/redacts prohibited fields.                                           |
-| `accounting.assert_journal_balanced(entry_id)`             | Raises exception unless debit total equals credit total and every line is valid.                           |
-| `accounting.post_journal_entry(entry_id)`                  | Locks entry, checks period/account/state/balance, marks posted; cannot mutate existing posted data.        |
-| `accounting.reverse_journal_entry(entry_id, reason, date)` | Creates linked opposite entry; never edits original.                                                       |
-| `pos.accept_sync_event(event_id)`                          | Idempotently orchestrates server acceptance; returns existing acknowledgement for prior accepted delivery. |
-| `inventory.record_stock_movement(...)`                     | Inserts immutable movement and detects policy/quantity exception.                                          |
-| `inventory.apply_weighted_average(...)`                    | Applies valuation movement only when perpetual weighted-average policy and reliable cost exist.            |
+| Function                                                   | Responsibility                                                                                               |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `platform.current_company_id()`                            | Reads/validates transaction tenant context for RLS/trigger use.                                              |
+| `platform.current_actor_id()`                              | Reads actor context for audit trigger/use case.                                                              |
+| `audit.write_event(...)`                                   | Appends validated audit event; strips/redacts prohibited fields.                                             |
+| `accounting.assert_journal_balanced(entry_id)`             | Raises exception unless debit total equals credit total and every line is valid.                             |
+| `accounting.post_journal_entry(entry_id)`                  | Locks entry, checks period/account/state/balance, marks posted; cannot mutate existing posted data.          |
+| `accounting.reverse_journal_entry(entry_id, reason, date)` | Creates linked opposite entry; never edits original.                                                         |
+| `inventory.stock_on_hand(branch_id, product_id)`           | Returns tenant-scoped on-hand quantity derived from immutable stock movements.                               |
+| `pos.assert_sale_event_integrity()`                        | Deferred commit check requiring matching lines, stock movements, stock exception, and posted source journal. |
 
 Functions that create postings use `SECURITY INVOKER` by default and validate tenant context. Any privileged maintenance function is explicitly `SECURITY DEFINER`, has fixed `search_path`, minimal grants, and a security review.
 
@@ -83,16 +82,33 @@ no journal entry.
 5. Write the correlated `pos.cash_shift.opened` audit event and complete the
    idempotency response. Do not create a journal entry.
 
-## POS sale acceptance procedure
+## POS cash-sale acceptance procedure
 
-1. Lock/read the supplied `pos.sync_event` idempotency anchor or insert it if new.
-2. If already accepted, return stored acknowledgement without another posting.
-3. Validate device status, company/branch/user/shift scope, grant/policy version, schema version, and sale payload.
-4. Create immutable sale, lines, and payment-attempt records.
-5. Insert inventory quantity movements and valuation effects allowed by policy.
-6. Build journal-entry draft/lines from the business-event mapping.
-7. Call `accounting.post_journal_entry`; failure rolls back every earlier write.
-8. Write audit event and stored event acknowledgement; commit.
+The US-032 application service holds an event-ID advisory lock before it reads
+or writes. The immutable `pos.sale_event` row itself is the accepted-event
+anchor; there is no mutable browser outbox state in PostgreSQL.
+
+1. Validate the exact signed event, session actor, registered device,
+   company/branch/shift scope, grant/policy version, schema version, price/tax
+   snapshots, and product/tax ownership.
+2. Return the original acknowledgement if the same accepted event and payload
+   are retried. Reject receipt or device/cashier sequence reuse instead of
+   creating a second sale.
+3. Acquire branch/product advisory locks, calculate quantity on hand from
+   `inventory.stock_movement`, and derive whether the completed offline sale
+   creates a stock exception.
+4. Create the system journal draft and call `accounting.post_journal_entry`.
+   It debits cash for the total and credits sales and VAT payable for the
+   captured net/tax amounts.
+5. Insert `pos.sale_event`, immutable `pos.sale_line` snapshots, and one
+   negative `inventory.stock_movement` for each stock line.
+6. Append correlated audit evidence, update the device's successful-sync time,
+   and commit. The deferred `pos.assert_sale_event_integrity()` trigger runs at
+   commit and rejects a transaction lacking any required effect.
+
+US-032 records quantity only. Cost-of-sales and inventory-value postings stay
+deferred until US-021 establishes costed receipts and the configured valuation
+policy can be applied without guessing a cost.
 
 ## Reporting procedure rules
 

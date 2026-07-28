@@ -1,13 +1,14 @@
 # US-031 — local cash-sale outbox manual test
 
-**Story status:** In progress — local secure capture is ready; server
-synchronization and financial posting are not yet implemented.
+**Story status:** In progress — local secure capture is ready. US-032 now
+synchronizes the signed event; use [US-032 sale-sync test](us-032-sale-sync.md)
+for authoritative accounting and inventory acceptance.
 
 ## Objective
 
 Verify that a cashier can prepare an offline-capable branch checkout, save a
-cash sale locally under the required security controls, and retain the pending
-event after reload without creating premature financial effects.
+signed cash sale locally under the required security controls, and retain the
+pending event after reload before it is deliberately synchronized.
 
 ## Preconditions
 
@@ -66,8 +67,8 @@ Expected:
 - The cart clears after success.
 - A single event appears with `Pending sync`, amount, line count, timestamp,
   and stable local reference.
-- The status text explicitly says no journal, stock movement, or tax receipt
-  was created.
+- The status text says the sale remains pending until the server acknowledges
+  its journal and stock effects.
 
 ## US31-T04 — persist through reload and offline use
 
@@ -78,29 +79,10 @@ Expected:
 4. Reload the page, add a cached product, and save a local cash sale.
 5. Re-enable the network and reload again.
 
-Expected:
-
-- Existing pending events remain visible after every reload.
-- A sale can be saved while disconnected because this slice writes only to
-  encrypted browser storage.
-- Re-enabling network does not silently send, post, remove, or relabel the
-  sale. It remains `Pending sync` until US-032 exists.
-
-## US31-T05 — accounting and compliance boundary
-
-1. Record the number of posted journals in the Finance workspace before saving
-   a local cash sale.
-2. Save the local sale, then return to Finance as an accountant or owner.
-3. Search for its local reference if the workspace permits; inspect recent
-   journals.
-
-Expected:
-
-- No sale journal is posted.
-- No cash, revenue, VAT, inventory, or cost-of-sales balance changes because
-  of the local event.
-- No tax receipt/invoice is produced.
-- This is a pass condition for the current slice, not a defect.
+Expected: the sale can be saved while disconnected because this step writes
+only to encrypted browser storage. Re-enabling network does not silently send
+or relabel it; it remains `Pending sync` until the cashier selects **Sync
+sales**. Continue with US32-T02 to verify the authoritative effects.
 
 ## Negative and data-safety checks
 
@@ -115,7 +97,7 @@ Expected:
 
 ## Pass criteria
 
-US-031 local-capture acceptance passes when US31-T01 through US31-T05 pass in
+US-031 local-capture acceptance passes when US31-T01 through US31-T04 pass in
 a configured test environment. The parent story remains **In progress** until
-US-032 safely synchronizes each event exactly once and posts inventory plus a
-balanced journal atomically.
+the US-032 manual acceptance, including exact-once synchronization and atomic
+posting evidence, is complete.
