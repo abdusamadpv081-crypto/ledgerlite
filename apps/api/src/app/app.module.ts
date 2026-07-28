@@ -44,6 +44,8 @@ import { CashierPinController } from "../pos/cashier-pin.controller.js";
 import { CashierPinService } from "../pos/cashier-pin.service.js";
 import { CashShiftController } from "../pos/cash-shift.controller.js";
 import { CashShiftService } from "../pos/cash-shift.service.js";
+import { SaleSyncController } from "../pos/sale-sync.controller.js";
+import { SaleSyncService } from "../pos/sale-sync.service.js";
 
 @Module({
   controllers:
@@ -60,6 +62,7 @@ import { CashShiftService } from "../pos/cash-shift.service.js";
           OfflineGrantVerificationKeyController,
           CashierPinController,
           CashShiftController,
+          SaleSyncController,
           CatalogManagementController,
           PosCatalogueController,
           CatalogController,
@@ -76,6 +79,7 @@ import { CashShiftService } from "../pos/cash-shift.service.js";
           OfflineGrantVerificationKeyController,
           CashierPinController,
           CashShiftController,
+          SaleSyncController,
           CatalogManagementController,
           PosCatalogueController,
         ],
@@ -113,6 +117,7 @@ import { CashShiftService } from "../pos/cash-shift.service.js";
     OfflineGrantService,
     CashierPinService,
     CashShiftService,
+    SaleSyncService,
     CompanyContextService,
     SessionService,
     OidcLoginService,
