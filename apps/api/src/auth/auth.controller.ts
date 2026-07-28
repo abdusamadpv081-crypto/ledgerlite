@@ -81,7 +81,7 @@ export class AuthController {
     @Res() reply: FastifyReply,
   ): Promise<FastifyReply> {
     const started = await this.oidcLogin.start(returnTo);
-    return reply.redirect(started.authorizationUrl.toString());
+    return reply.code(302).redirect(started.authorizationUrl.toString());
   }
 
   @Get("callback")
@@ -95,7 +95,9 @@ export class AuthController {
       ...sessionCookieOptions,
       expires: completed.session.expiresAt,
     });
-    return reply.redirect(webApplicationReturnUrl(completed.returnTo));
+    return reply
+      .code(302)
+      .redirect(webApplicationReturnUrl(completed.returnTo));
   }
 
   @Post("logout")
