@@ -646,6 +646,14 @@ summary {
   background: #fef3c7;
   color: #92400e;
 }
+.status-synced {
+  background: #dcfce7;
+  color: #166534;
+}
+.status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
 .pos-outbox-list code {
   max-width: 18rem;
   color: var(--color-text-muted);

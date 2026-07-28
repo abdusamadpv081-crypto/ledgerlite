@@ -1,4 +1,11 @@
 import {
+  POS_CASH_SALE_EVENT_SCHEMA_VERSION,
+  posCashSaleSignaturePayload,
+  type PosCashSaleEvent,
+  type PosCashSaleLine,
+} from "@ledgerlite/domain";
+import { request } from "./api";
+import {
   decryptOfflinePosCache,
   encryptOfflinePosCache,
   type CachedOfflineAuthority,
@@ -6,10 +13,12 @@ import {
 } from "./pos-offline-authority";
 import { type CachedCashShift } from "./pos-cash-shift";
 import {
+  type LocalPosDevice,
   POS_SALE_OUTBOX_VERSION,
   type EncryptedPosSaleOutboxRecord,
   posBrowserCrypto,
   posDeviceDatabase,
+  signDevicePayload,
 } from "./pos-device";
 
 const decimalPlaces = 6;
@@ -33,42 +42,29 @@ export type PosCatalogueProduct = Readonly<{
   }> | null;
 }>;
 
-export type LocalSaleLine = Readonly<{
-  productId: string;
-  productName: string;
-  sku: string | null;
-  quantity: number;
-  unitPrice: string;
-  taxTreatment: "inclusive" | "exclusive";
-  taxCode: PosCatalogueProduct["taxCode"];
-  netAmount: string;
-  taxAmount: string;
-  totalAmount: string;
+export type LocalSaleLine = PosCashSaleLine;
+export type LocalSaleAcknowledgement = Readonly<{
+  acknowledgedAt: string;
+  journalEntryId?: string;
+  rejectionCode?: string;
+  rejectionMessage?: string;
+  saleId?: string;
+  stockException?: boolean;
 }>;
-
-export type LocalCashSaleEvent = Readonly<{
-  version: typeof POS_SALE_OUTBOX_VERSION;
-  eventId: string;
-  localReceiptId: string;
-  status: "pending_sync";
-  companyId: string;
-  branchId: string;
-  deviceId: string;
-  cashierUserId: string;
-  shiftId: string;
-  authorityGrantId: string;
-  authorityPolicyId: string;
-  authorityPolicyVersion: number;
-  occurredAt: string;
-  currency: string;
-  payment: Readonly<{ method: "cash"; amount: string }>;
-  lines: readonly LocalSaleLine[];
-  totals: Readonly<{
-    netAmount: string;
-    taxAmount: string;
-    totalAmount: string;
+export type LocalSaleStatus =
+  "pending_sync" | "syncing" | "synced" | "rejected";
+export type LocalCashSaleDraft = PosCashSaleEvent &
+  Readonly<{
+    version: typeof POS_SALE_OUTBOX_VERSION;
+    status: "pending_sync";
   }>;
-}>;
+export type LocalCashSaleEvent = PosCashSaleEvent &
+  Readonly<{
+    version: typeof POS_SALE_OUTBOX_VERSION;
+    status: LocalSaleStatus;
+    deviceSignature: string;
+    acknowledgement?: LocalSaleAcknowledgement;
+  }>;
 
 export type LocalSaleContext = Readonly<{
   scope: OfflineAuthorityScope;
@@ -79,14 +75,37 @@ export type LocalSaleContext = Readonly<{
 
 export type LocalCashSaleInput = Readonly<{
   context: LocalSaleContext;
+  device?: LocalPosDevice;
   products: readonly PosCatalogueProduct[];
   lines: readonly Readonly<{ productId: string; quantity: number }>[];
+  localSequence?: number;
   eventId?: string;
   localReceiptId?: string;
   occurredAt?: string;
 }>;
 
 type StoredSale = LocalCashSaleEvent;
+
+function base64Url(value: Uint8Array): string {
+  let binary = "";
+  for (const byte of value) binary += String.fromCharCode(byte);
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
+function eventForSignature(
+  sale: LocalCashSaleDraft | LocalCashSaleEvent,
+): PosCashSaleEvent {
+  const {
+    acknowledgement: _acknowledgement,
+    deviceSignature: _deviceSignature,
+    status: _status,
+    version: _version,
+    ...event
+  } = sale as LocalCashSaleEvent;
+  return event;
+}
 
 function moneyUnits(value: string): bigint {
   if (!decimal.test(value)) throw new Error("A POS sale amount is invalid.");
@@ -123,6 +142,10 @@ function identifier(value: string, message: string): string {
 function positiveInteger(value: number, message: string): number {
   if (!Number.isInteger(value) || value < 1 || value > 999_999)
     throw new Error(message);
+  return value;
+}
+function localSequence(value: number, message: string): number {
+  if (!Number.isSafeInteger(value) || value < 1) throw new Error(message);
   return value;
 }
 
@@ -227,7 +250,7 @@ function assertContext(context: LocalSaleContext, occurredAt: string): void {
 
 export function createLocalCashSale(
   input: LocalCashSaleInput,
-): LocalCashSaleEvent {
+): LocalCashSaleDraft {
   const occurredAt = timestamp(input.occurredAt ?? new Date().toISOString());
   assertContext(input.context, occurredAt);
   if (input.lines.length === 0)
@@ -258,8 +281,14 @@ export function createLocalCashSale(
     throw new Error("Local sale event and receipt IDs must be distinct.");
   return {
     version: POS_SALE_OUTBOX_VERSION,
+    schemaVersion: POS_CASH_SALE_EVENT_SCHEMA_VERSION,
+    eventType: "cash_sale",
     eventId,
     localReceiptId,
+    localSequence: localSequence(
+      input.localSequence ?? 1,
+      "Local sale sequence is invalid.",
+    ),
     status: "pending_sync",
     companyId: input.context.scope.companyId,
     branchId: input.context.scope.branchId,
@@ -299,9 +328,15 @@ function storedSale(value: unknown, scope: OfflineAuthorityScope): StoredSale {
   const sale = object(value) as Partial<LocalCashSaleEvent>;
   if (
     sale.version !== POS_SALE_OUTBOX_VERSION ||
-    sale.status !== "pending_sync" ||
+    sale.schemaVersion !== POS_CASH_SALE_EVENT_SCHEMA_VERSION ||
+    sale.eventType !== "cash_sale" ||
+    !["pending_sync", "syncing", "synced", "rejected"].includes(
+      sale.status as string,
+    ) ||
     typeof sale.eventId !== "string" ||
     typeof sale.localReceiptId !== "string" ||
+    typeof sale.localSequence !== "number" ||
+    typeof sale.deviceSignature !== "string" ||
     !scopeMatches(scope, sale as LocalCashSaleEvent) ||
     typeof sale.shiftId !== "string" ||
     typeof sale.authorityGrantId !== "string" ||
@@ -317,6 +352,9 @@ function storedSale(value: unknown, scope: OfflineAuthorityScope): StoredSale {
     throw new Error("Encrypted local sale is invalid.");
   identifier(sale.eventId, "Encrypted local sale is invalid.");
   identifier(sale.localReceiptId, "Encrypted local sale is invalid.");
+  localSequence(sale.localSequence, "Encrypted local sale is invalid.");
+  if (!/^[A-Za-z0-9_-]{86}$/.test(sale.deviceSignature))
+    throw new Error("Encrypted local sale is invalid.");
   if (sale.eventId === sale.localReceiptId)
     throw new Error("Encrypted local sale is invalid.");
   timestamp(sale.occurredAt);
@@ -380,11 +418,54 @@ function storedSale(value: unknown, scope: OfflineAuthorityScope): StoredSale {
     payment.amount !== expectedTotals.totalAmount
   )
     throw new Error("Encrypted local sale is invalid.");
+  let acknowledgement: LocalSaleAcknowledgement | undefined;
+  if (sale.acknowledgement !== undefined) {
+    const candidate = object(sale.acknowledgement);
+    if (
+      typeof candidate.acknowledgedAt !== "string" ||
+      (candidate.journalEntryId !== undefined &&
+        typeof candidate.journalEntryId !== "string") ||
+      (candidate.rejectionCode !== undefined &&
+        typeof candidate.rejectionCode !== "string") ||
+      (candidate.rejectionMessage !== undefined &&
+        typeof candidate.rejectionMessage !== "string") ||
+      (candidate.saleId !== undefined &&
+        typeof candidate.saleId !== "string") ||
+      (candidate.stockException !== undefined &&
+        typeof candidate.stockException !== "boolean")
+    )
+      throw new Error("Encrypted local sale is invalid.");
+    timestamp(candidate.acknowledgedAt);
+    acknowledgement = {
+      acknowledgedAt: candidate.acknowledgedAt,
+      ...(candidate.journalEntryId === undefined
+        ? {}
+        : { journalEntryId: candidate.journalEntryId }),
+      ...(candidate.rejectionCode === undefined
+        ? {}
+        : { rejectionCode: candidate.rejectionCode }),
+      ...(candidate.rejectionMessage === undefined
+        ? {}
+        : { rejectionMessage: candidate.rejectionMessage }),
+      ...(candidate.saleId === undefined ? {} : { saleId: candidate.saleId }),
+      ...(candidate.stockException === undefined
+        ? {}
+        : { stockException: candidate.stockException }),
+    };
+  }
+  if (
+    (sale.status === "synced" || sale.status === "rejected") &&
+    acknowledgement === undefined
+  )
+    throw new Error("Encrypted local sale is invalid.");
   return {
     version: POS_SALE_OUTBOX_VERSION,
+    schemaVersion: POS_CASH_SALE_EVENT_SCHEMA_VERSION,
+    eventType: "cash_sale",
     eventId: sale.eventId,
     localReceiptId: sale.localReceiptId,
-    status: "pending_sync",
+    localSequence: sale.localSequence,
+    status: sale.status as LocalSaleStatus,
     companyId: scope.companyId,
     branchId: scope.branchId,
     deviceId: scope.deviceId,
@@ -407,14 +488,78 @@ function storedSale(value: unknown, scope: OfflineAuthorityScope): StoredSale {
     payment: { method: "cash", amount: expectedTotals.totalAmount },
     lines: checkedLines,
     totals: expectedTotals,
+    deviceSignature: sale.deviceSignature,
+    ...(acknowledgement === undefined ? {} : { acknowledgement }),
   };
 }
 
 export async function enqueueLocalCashSale(
   input: LocalCashSaleInput,
 ): Promise<LocalCashSaleEvent> {
-  const sale = createLocalCashSale(input);
   const scope = input.context.scope;
+  const device = input.device;
+  if (
+    !device ||
+    device.state !== "registered" ||
+    device.deviceId !== scope.deviceId ||
+    device.companyId !== scope.companyId ||
+    device.branchId !== scope.branchId
+  )
+    throw new Error(
+      "This registered browser device is required to sign a local cash sale.",
+    );
+  const sequence = await nextLocalSequence(scope);
+  const draft = createLocalCashSale({ ...input, localSequence: sequence });
+  const signature = await signDevicePayload(
+    device,
+    posCashSaleSignaturePayload(eventForSignature(draft)),
+  );
+  const sale: LocalCashSaleEvent = {
+    ...draft,
+    deviceSignature: base64Url(new Uint8Array(signature)),
+  };
+  try {
+    await storeSale(scope, sale, false);
+  } catch (error) {
+    if (error instanceof Error && error.name === "ConstraintError")
+      throw new Error(
+        "This local sale is already queued for synchronization.",
+        { cause: error },
+      );
+    throw error;
+  }
+  return sale;
+}
+
+async function nextLocalSequence(
+  scope: OfflineAuthorityScope,
+): Promise<number> {
+  const records = await posDeviceDatabase()
+    .saleOutbox.filter(
+      (record) =>
+        record.companyId === scope.companyId &&
+        record.branchId === scope.branchId &&
+        record.deviceId === scope.deviceId &&
+        record.cashierUserId === scope.cashierUserId,
+    )
+    .toArray();
+  const highest = records.reduce(
+    (current, record) =>
+      Number.isSafeInteger(record.localSequence)
+        ? Math.max(current, record.localSequence)
+        : current,
+    0,
+  );
+  if (highest >= Number.MAX_SAFE_INTEGER)
+    throw new Error("This POS device has exhausted its local sale sequence.");
+  return highest + 1;
+}
+
+async function storeSale(
+  scope: OfflineAuthorityScope,
+  sale: LocalCashSaleEvent,
+  replace: boolean,
+): Promise<void> {
   const encrypted = await encryptOfflinePosCache(
     posBrowserCrypto(),
     "sale-outbox",
@@ -429,25 +574,17 @@ export async function enqueueLocalCashSale(
     cashierUserId: scope.cashierUserId,
     shiftId: sale.shiftId,
     authorityGrantId: sale.authorityGrantId,
-    status: "pending_sync",
+    localSequence: sale.localSequence,
+    status: sale.status,
     occurredAt: sale.occurredAt,
     ...encrypted,
     updatedAt: new Date().toISOString(),
   };
-  try {
-    await posDeviceDatabase().saleOutbox.add(record);
-  } catch (error) {
-    if (error instanceof Error && error.name === "ConstraintError")
-      throw new Error(
-        "This local sale is already queued for synchronization.",
-        { cause: error },
-      );
-    throw error;
-  }
-  return sale;
+  if (replace) await posDeviceDatabase().saleOutbox.put(record);
+  else await posDeviceDatabase().saleOutbox.add(record);
 }
 
-export async function pendingLocalCashSales(
+export async function localCashSales(
   scope: OfflineAuthorityScope,
 ): Promise<readonly LocalCashSaleEvent[]> {
   const database = posDeviceDatabase();
@@ -457,14 +594,16 @@ export async function pendingLocalCashSales(
         record.companyId === scope.companyId &&
         record.branchId === scope.branchId &&
         record.deviceId === scope.deviceId &&
-        record.cashierUserId === scope.cashierUserId &&
-        record.status === "pending_sync",
+        record.cashierUserId === scope.cashierUserId,
     )
     .toArray();
   const sales: LocalCashSaleEvent[] = [];
   for (const record of records) {
+    // Pre-release v1 records have no signed protocol payload. Leave their
+    // encrypted evidence untouched instead of silently discarding it.
+    if (!Number.isSafeInteger(record.localSequence)) continue;
     try {
-      const sale = storedSale(
+      let sale = storedSale(
         await decryptOfflinePosCache<unknown>(
           posBrowserCrypto(),
           "sale-outbox",
@@ -477,15 +616,137 @@ export async function pendingLocalCashSales(
         record.id !== saleId(scope, sale.eventId) ||
         record.shiftId !== sale.shiftId ||
         record.authorityGrantId !== sale.authorityGrantId ||
+        record.localSequence !== sale.localSequence ||
+        record.status !== sale.status ||
         record.occurredAt !== sale.occurredAt
       )
         throw new Error("Encrypted local sale metadata is invalid.");
+      if (sale.status === "syncing") {
+        sale = { ...sale, status: "pending_sync" };
+        await storeSale(scope, sale, true);
+      }
       sales.push(sale);
     } catch {
       await database.saleOutbox.delete(record.id);
     }
   }
-  return sales.sort((left, right) =>
-    left.occurredAt.localeCompare(right.occurredAt),
+  return sales.sort(
+    (left, right) =>
+      left.localSequence - right.localSequence ||
+      left.occurredAt.localeCompare(right.occurredAt),
   );
+}
+
+export async function pendingLocalCashSales(
+  scope: OfflineAuthorityScope,
+): Promise<readonly LocalCashSaleEvent[]> {
+  const sales = await localCashSales(scope);
+  return sales.filter(
+    (sale) => sale.status === "pending_sync" || sale.status === "rejected",
+  );
+}
+
+type SaleSyncApiResponse = Readonly<{
+  data:
+    | Readonly<{
+        acknowledgedAt: string;
+        eventId: string;
+        journalEntryId: string;
+        localReceiptId: string;
+        saleId: string;
+        status:
+          "accepted" | "duplicate_accepted" | "accepted_with_stock_exception";
+        stockException: boolean;
+      }>
+    | Readonly<{
+        acknowledgedAt: string;
+        eventId: string;
+        rejectionCode: string;
+        rejectionMessage: string;
+        status: "rejected";
+      }>;
+}>;
+export type SaleSyncSummary = Readonly<{
+  rejected: number;
+  synced: number;
+  waiting: number;
+}>;
+
+export async function synchronizeLocalCashSales(input: {
+  device: LocalPosDevice;
+  scope: OfflineAuthorityScope;
+}): Promise<SaleSyncSummary> {
+  const { device, scope } = input;
+  if (
+    device.state !== "registered" ||
+    device.deviceId !== scope.deviceId ||
+    device.companyId !== scope.companyId ||
+    device.branchId !== scope.branchId
+  )
+    throw new Error("This browser is not the registered POS device for sync.");
+  const sales = await localCashSales(scope);
+  let rejected = 0;
+  let synced = 0;
+  let waiting = 0;
+  for (const current of sales) {
+    if (current.status === "synced") continue;
+    const syncing: LocalCashSaleEvent = { ...current, status: "syncing" };
+    await storeSale(scope, syncing, true);
+    try {
+      const response = await request<SaleSyncApiResponse>(
+        `/companies/${scope.companyId}/branches/${scope.branchId}/pos/sales/sync`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            ...eventForSignature(current),
+            deviceSignature: current.deviceSignature,
+          }),
+        },
+      );
+      const result = response.data;
+      if (
+        result.eventId !== current.eventId ||
+        ("localReceiptId" in result &&
+          result.localReceiptId !== current.localReceiptId)
+      )
+        throw new Error("The server acknowledgement does not match this sale.");
+      if (result.status === "rejected") {
+        await storeSale(
+          scope,
+          {
+            ...current,
+            status: "rejected",
+            acknowledgement: {
+              acknowledgedAt: result.acknowledgedAt,
+              rejectionCode: result.rejectionCode,
+              rejectionMessage: result.rejectionMessage,
+            },
+          },
+          true,
+        );
+        rejected += 1;
+      } else {
+        await storeSale(
+          scope,
+          {
+            ...current,
+            status: "synced",
+            acknowledgement: {
+              acknowledgedAt: result.acknowledgedAt,
+              journalEntryId: result.journalEntryId,
+              saleId: result.saleId,
+              stockException: result.stockException,
+            },
+          },
+          true,
+        );
+        synced += 1;
+      }
+    } catch {
+      await storeSale(scope, { ...current, status: "pending_sync" }, true);
+      waiting += 1;
+    }
+  }
+  return { rejected, synced, waiting };
 }

@@ -3,7 +3,7 @@ import Dexie, { type Table } from "dexie";
 export const POS_DEVICE_APP_VERSION = "0.1.0";
 export const POS_DEVICE_LOCAL_SCHEMA_VERSION = 1;
 export const POS_OFFLINE_AUTHORITY_CACHE_VERSION = 1;
-export const POS_SALE_OUTBOX_VERSION = 1;
+export const POS_SALE_OUTBOX_VERSION = 2;
 export const POS_CATALOGUE_CACHE_VERSION = 1;
 
 export type DevicePublicKeyJwk = Readonly<{
@@ -87,7 +87,8 @@ export type EncryptedPosSaleOutboxRecord = Readonly<{
   cashierUserId: string;
   shiftId: string;
   authorityGrantId: string;
-  status: "pending_sync";
+  localSequence: number;
+  status: "pending_sync" | "syncing" | "synced" | "rejected";
   occurredAt: string;
   encryptedPayload: ArrayBuffer;
   initializationVector: ArrayBuffer;
@@ -180,6 +181,22 @@ export class PosDeviceDatabase extends Dexie {
         "&id, companyId, branchId, deviceId, cashierUserId, shiftId, updatedAt",
       saleOutbox:
         "&id, companyId, branchId, deviceId, cashierUserId, shiftId, authorityGrantId, status, occurredAt, updatedAt",
+      posCatalogues:
+        "&id, companyId, branchId, deviceId, cashierUserId, refreshedAt, updatedAt",
+    });
+    this.version(7).stores({
+      devices: "&id, companyId, branchId, state, deviceId, updatedAt",
+      cacheKeys: "&id, createdAt",
+      offlineAuthorities:
+        "&id, companyId, branchId, deviceId, cashierUserId, expiresAt, updatedAt",
+      offlineAuthorityAttempts:
+        "&id, companyId, branchId, deviceId, cashierUserId, updatedAt",
+      cashierPins:
+        "&id, companyId, branchId, deviceId, cashierUserId, pinVersion, updatedAt",
+      cashierShifts:
+        "&id, companyId, branchId, deviceId, cashierUserId, shiftId, updatedAt",
+      saleOutbox:
+        "&id, companyId, branchId, deviceId, cashierUserId, shiftId, authorityGrantId, localSequence, status, occurredAt, updatedAt",
       posCatalogues:
         "&id, companyId, branchId, deviceId, cashierUserId, refreshedAt, updatedAt",
     });

@@ -1,23 +1,17 @@
 import "fake-indexeddb/auto";
 
 import { webcrypto } from "node:crypto";
-import {
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cachePosCatalogue, cachedPosCatalogue } from "./pos-catalogue";
 import {
   createLocalCashSale,
   enqueueLocalCashSale,
+  localCashSales,
   pendingLocalCashSales,
+  synchronizeLocalCashSales,
   type LocalCashSaleInput,
 } from "./pos-sale-outbox";
-import { posDeviceDatabase } from "./pos-device";
+import { posDeviceDatabase, type LocalPosDevice } from "./pos-device";
 
 const scope = {
   companyId: "c22ff1c3-253f-4457-bcc5-3098d827de20",
@@ -51,6 +45,7 @@ const products = [
     taxCode: null,
   },
 ] as const;
+let device: LocalPosDevice;
 
 function saleInput(
   overrides: Partial<LocalCashSaleInput> = {},
@@ -82,6 +77,7 @@ function saleInput(
       },
       localSessionExpiresAt: "2030-07-26T11:00:00.000Z",
     },
+    device,
     products,
     lines: [
       { productId: products[0].id, quantity: 2 },
@@ -94,14 +90,37 @@ function saleInput(
   };
 }
 
-beforeAll(() => {
+beforeEach(async () => {
   vi.stubGlobal("window", {
     crypto: webcrypto,
     isSecureContext: true,
   });
-});
-
-beforeEach(async () => {
+  const keys = await webcrypto.subtle.generateKey(
+    { name: "ECDSA", namedCurve: "P-256" },
+    false,
+    ["sign", "verify"],
+  );
+  device = {
+    id: `${scope.companyId}:${scope.branchId}`,
+    companyId: scope.companyId,
+    branchId: scope.branchId,
+    displayName: "Test POS",
+    publicKeyJwk: {
+      alg: "ES256",
+      crv: "P-256",
+      ext: true,
+      key_ops: ["verify"],
+      kty: "EC",
+      x: "test-x",
+      y: "test-y",
+    },
+    privateSigningKey: keys.privateKey as unknown as CryptoKey,
+    registrationIdempotencyKey: "72f103ad-bc06-4cbe-80b4-4e5efebd6341",
+    state: "registered",
+    deviceId: scope.deviceId,
+    publicKeyFingerprint: "test-fingerprint",
+    updatedAt: "2026-07-26T10:00:00.000Z",
+  };
   const database = posDeviceDatabase();
   await Promise.all([
     database.cacheKeys.clear(),
@@ -112,6 +131,7 @@ beforeEach(async () => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe("local POS sale outbox", () => {
@@ -181,5 +201,85 @@ describe("local POS sale outbox", () => {
       `${scope.companyId}:${scope.branchId}:${scope.deviceId}:${scope.cashierUserId}`,
     );
     expect(catalogueRecord?.encryptedPayload).toBeInstanceOf(ArrayBuffer);
+  });
+
+  it("marks a signed sale as synced only after the server acknowledges it", async () => {
+    const queued = await enqueueLocalCashSale(saleInput());
+    const fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        data: {
+          acknowledgedAt: "2026-07-26T10:31:00.000Z",
+          eventId: queued.eventId,
+          journalEntryId: "6d8862fb-c1c5-4198-a0a9-017dc284b7e8",
+          localReceiptId: queued.localReceiptId,
+          saleId: queued.eventId,
+          status: "accepted",
+          stockException: false,
+        },
+      }),
+    });
+    vi.stubGlobal("fetch", fetch);
+
+    await expect(synchronizeLocalCashSales({ device, scope })).resolves.toEqual(
+      { rejected: 0, synced: 1, waiting: 0 },
+    );
+    await expect(localCashSales(scope)).resolves.toMatchObject([
+      {
+        eventId: queued.eventId,
+        status: "synced",
+        acknowledgement: {
+          journalEntryId: "6d8862fb-c1c5-4198-a0a9-017dc284b7e8",
+        },
+      },
+    ]);
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(JSON.parse(fetch.mock.calls[0][1].body)).toMatchObject({
+      eventId: queued.eventId,
+      deviceSignature: expect.stringMatching(/^[A-Za-z0-9_-]{86}$/),
+    });
+  });
+
+  it("retains a rejected sale with its server reason for a later retry", async () => {
+    const queued = await enqueueLocalCashSale(saleInput());
+    vi.stubGlobal("fetch", async () => ({
+      ok: true,
+      json: async () => ({
+        data: {
+          acknowledgedAt: "2026-07-26T10:31:00.000Z",
+          eventId: queued.eventId,
+          rejectionCode: "POS_SHIFT_CLOSED",
+          rejectionMessage: "The cash shift is closed.",
+          status: "rejected",
+        },
+      }),
+    }));
+
+    await expect(synchronizeLocalCashSales({ device, scope })).resolves.toEqual(
+      { rejected: 1, synced: 0, waiting: 0 },
+    );
+    await expect(localCashSales(scope)).resolves.toMatchObject([
+      {
+        eventId: queued.eventId,
+        status: "rejected",
+        acknowledgement: {
+          rejectionCode: "POS_SHIFT_CLOSED",
+        },
+      },
+    ]);
+  });
+
+  it("returns an unconfirmed delivery to pending so its immutable event can retry", async () => {
+    const queued = await enqueueLocalCashSale(saleInput());
+    vi.stubGlobal("fetch", async () => {
+      throw new Error("Network unavailable");
+    });
+
+    await expect(synchronizeLocalCashSales({ device, scope })).resolves.toEqual(
+      { rejected: 0, synced: 0, waiting: 1 },
+    );
+    await expect(localCashSales(scope)).resolves.toMatchObject([
+      { eventId: queued.eventId, status: "pending_sync" },
+    ]);
   });
 });

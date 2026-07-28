@@ -51,7 +51,8 @@ import {
 } from "../../lib/pos-device";
 import {
   enqueueLocalCashSale,
-  pendingLocalCashSales,
+  localCashSales,
+  synchronizeLocalCashSales,
   type LocalCashSaleEvent,
 } from "../../lib/pos-sale-outbox";
 
@@ -103,9 +104,7 @@ export default function PosAccessPage() {
   const [cashShift, setCashShift] = useState<CachedCashShift>();
   const [catalogue, setCatalogue] = useState<CachedPosCatalogue>();
   const [cart, setCart] = useState<readonly CartLine[]>([]);
-  const [pendingSales, setPendingSales] = useState<
-    readonly LocalCashSaleEvent[]
-  >([]);
+  const [sales, setSales] = useState<readonly LocalCashSaleEvent[]>([]);
   const [newPin, setNewPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [unlockPinValue, setUnlockPinValue] = useState("");
@@ -120,6 +119,7 @@ export default function PosAccessPage() {
   const [pinSubmitting, setPinSubmitting] = useState(false);
   const [shiftSubmitting, setShiftSubmitting] = useState(false);
   const [saleSubmitting, setSaleSubmitting] = useState(false);
+  const [syncSubmitting, setSyncSubmitting] = useState(false);
   const [secureBrowser, setSecureBrowser] = useState(false);
   const company = useMemo(
     () => companies.find((item) => item.companyId === companyId),
@@ -159,6 +159,14 @@ export default function PosAccessPage() {
       ),
     [cartItems],
   );
+  const waitingSales = useMemo(
+    () => sales.filter((sale) => sale.status !== "synced"),
+    [sales],
+  );
+  const rejectedSales = useMemo(
+    () => sales.filter((sale) => sale.status === "rejected"),
+    [sales],
+  );
 
   const loadAuthority = useCallback(
     async (
@@ -177,7 +185,7 @@ export default function PosAccessPage() {
           setCashShift(undefined);
           setCatalogue(undefined);
           setCart([]);
-          setPendingSales([]);
+          setSales([]);
           setMessage(
             "Register this browser as a POS device before refreshing offline authority.",
           );
@@ -195,13 +203,13 @@ export default function PosAccessPage() {
             cachedCashierPin(scope),
             cachedCashShift(scope),
             cachedPosCatalogue(scope),
-            pendingLocalCashSales(scope),
+            localCashSales(scope),
           ]);
         setAuthority(cached);
         setCashierPin(cachedPin);
         setCashShift(cachedShift);
         setCatalogue(cachedCatalogue);
-        setPendingSales(cachedSales);
+        setSales(cachedSales);
         setCart([]);
         try {
           const current = await request<CachedCashShift | null>(
@@ -230,7 +238,7 @@ export default function PosAccessPage() {
         setCashShift(undefined);
         setCatalogue(undefined);
         setCart([]);
-        setPendingSales([]);
+        setSales([]);
         setMessage(
           error instanceof Error
             ? error.message
@@ -365,6 +373,7 @@ export default function PosAccessPage() {
       !cashShiftOnThisDevice ||
       !cashierUnlocked ||
       !catalogue ||
+      !device ||
       cartItems.length === 0 ||
       cartItems.length !== cart.length
     ) {
@@ -382,6 +391,7 @@ export default function PosAccessPage() {
           cashShift,
           localSessionExpiresAt,
         },
+        device,
         products: catalogue.products,
         lines: cartItems.map((item) => ({
           productId: item.product.id,
@@ -389,9 +399,9 @@ export default function PosAccessPage() {
         })),
       });
       setCart([]);
-      setPendingSales(await pendingLocalCashSales(scope));
+      setSales(await localCashSales(scope));
       setMessage(
-        `Cash sale ${sale.localReceiptId} is saved encrypted on this device and pending server synchronization. No journal, stock movement, or tax receipt has been created yet.`,
+        `Cash sale ${sale.localReceiptId} is signed and saved encrypted on this device. It remains pending until the server acknowledges the journal and stock effects.`,
       );
     } catch (error) {
       setMessage(
@@ -401,6 +411,36 @@ export default function PosAccessPage() {
       );
     } finally {
       setSaleSubmitting(false);
+    }
+  }
+
+  async function synchronizeSales() {
+    const scope = offlineScope();
+    if (!scope || !device) return;
+    setSyncSubmitting(true);
+    try {
+      const summary = await synchronizeLocalCashSales({ device, scope });
+      setSales(await localCashSales(scope));
+      if (summary.rejected > 0)
+        setMessage(
+          `${summary.synced} sale${summary.synced === 1 ? "" : "s"} synced; ${summary.rejected} need${summary.rejected === 1 ? "s" : ""} attention. Rejected events are retained with their server reason.`,
+        );
+      else if (summary.waiting > 0)
+        setMessage(
+          "The connection did not confirm every sale. Pending events remain encrypted and will retry safely.",
+        );
+      else
+        setMessage(
+          `${summary.synced} sale${summary.synced === 1 ? "" : "s"} synced. Server acknowledgement created the authoritative journal and stock effects.`,
+        );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Could not synchronize local sales.",
+      );
+    } finally {
+      setSyncSubmitting(false);
     }
   }
 
@@ -551,7 +591,7 @@ export default function PosAccessPage() {
     setCashShift(undefined);
     setCatalogue(undefined);
     setCart([]);
-    setPendingSales([]);
+    setSales([]);
     setLocalSessionExpiresAt("");
     if (nextBranch)
       void loadAuthority(nextCompanyId, nextBranch.branchId, userId);
@@ -565,7 +605,7 @@ export default function PosAccessPage() {
     setCashShift(undefined);
     setCatalogue(undefined);
     setCart([]);
-    setPendingSales([]);
+    setSales([]);
     setLocalSessionExpiresAt("");
     void loadAuthority(companyId, nextBranchId, userId);
   }
@@ -996,9 +1036,9 @@ export default function PosAccessPage() {
             <div className="pos-sync-state">
               <CloudOff aria-hidden="true" size={18} />
               <span>
-                {pendingSales.length === 1
-                  ? "1 sale pending sync"
-                  : `${pendingSales.length} sales pending sync`}
+                {waitingSales.length === 1
+                  ? "1 sale needs sync"
+                  : `${waitingSales.length} sales need sync`}
               </span>
             </div>
           </header>
@@ -1162,8 +1202,9 @@ export default function PosAccessPage() {
               </button>
               <p className="form-help">
                 Requires cached authority, a verified cashier PIN, and an open
-                cash shift. The sale remains pending until a future sync posts
-                inventory and accounting effects atomically.
+                cash shift. The sale is signed before encrypted storage and
+                remains pending until a server acknowledgement posts inventory
+                and accounting effects atomically.
               </p>
             </article>
           </div>
@@ -1172,17 +1213,29 @@ export default function PosAccessPage() {
             <div className="panel-heading">
               <div>
                 <p className="eyebrow">Encrypted local outbox</p>
-                <h3>Pending sale events</h3>
+                <h3>Sale synchronization</h3>
               </div>
-              <CloudOff aria-hidden="true" size={20} />
+              <button
+                className="secondary"
+                type="button"
+                onClick={() => void synchronizeSales()}
+                disabled={
+                  syncSubmitting ||
+                  waitingSales.length === 0 ||
+                  device?.state !== "registered"
+                }
+              >
+                <RefreshCw size={18} />
+                {syncSubmitting ? "Synchronizing..." : "Sync sales"}
+              </button>
             </div>
-            {pendingSales.length === 0 ? (
+            {sales.length === 0 ? (
               <p className="empty-cart">
-                No locally saved sales are waiting for synchronization.
+                No locally saved sales are available on this browser device.
               </p>
             ) : (
               <ul className="pos-outbox-list">
-                {pendingSales.map((sale) => (
+                {sales.map((sale) => (
                   <li key={sale.eventId}>
                     <div>
                       <strong>
@@ -1195,23 +1248,54 @@ export default function PosAccessPage() {
                       </small>
                     </div>
                     <div>
-                      <span className="status-badge status-pending">
-                        Pending sync
+                      <span
+                        className={`status-badge ${
+                          sale.status === "synced"
+                            ? "status-synced"
+                            : sale.status === "rejected"
+                              ? "status-rejected"
+                              : "status-pending"
+                        }`}
+                      >
+                        {sale.status === "synced"
+                          ? "Synced"
+                          : sale.status === "rejected"
+                            ? "Needs attention"
+                            : sale.status === "syncing"
+                              ? "Synchronizing"
+                              : "Pending sync"}
                       </span>
+                      {sale.acknowledgement?.stockException ? (
+                        <small>Stock exception recorded</small>
+                      ) : null}
+                      {sale.acknowledgement?.rejectionCode ? (
+                        <small>
+                          {sale.acknowledgement.rejectionCode}:{" "}
+                          {sale.acknowledgement.rejectionMessage}
+                        </small>
+                      ) : null}
                       <code>{sale.localReceiptId}</code>
                     </div>
                   </li>
                 ))}
               </ul>
             )}
+            {rejectedSales.length > 0 ? (
+              <p className="form-help">
+                Rejected sales remain immutable on this device. Resolve the
+                displayed reason, then use Sync sales to retry the same signed
+                event safely.
+              </p>
+            ) : null}
           </article>
         </section>
 
         <section className="notice device-next-step">
           <ShieldCheck aria-hidden="true" size={18} />
           <span>
-            Next: synchronize pending sales exactly once, then post inventory
-            and accounting effects in one atomic server transaction.
+            Signed cash sales can now synchronize exactly once. A sale becomes
+            synced only after the server acknowledges its stock and accounting
+            effects.
           </span>
         </section>
       </section>
