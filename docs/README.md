@@ -6,6 +6,7 @@
 | [Market research](01-product/market-and-architecture-research.md)           | Public POS/accounting benchmark findings and product implications.         |
 | [Requirements](02-requirements/user-stories.md)                             | Epics, user stories, and acceptance criteria.                              |
 | [Domain](03-domain/accounting-rules.md)                                     | Accounting and offline POS rules that cannot be violated.                  |
+| [Cash-sale sync contract](03-domain/pos-sale-sync-contract.md)              | Signed event, exact-once acknowledgement, rejection, and posting contract. |
 | [Architecture](04-architecture/architecture-principles.md)                  | Technical constraints and decisions.                                       |
 | [Database design](04-architecture/database/README.md)                       | PostgreSQL schema, integrity, operations, and recovery design.             |
 | [Design system](05-design-system/design-system.md)                          | Foundations and component rules for a consistent product UI.               |
@@ -16,8 +17,6 @@
 | [Offline authority acceptance](06-delivery/offline-authority-acceptance.md) | Manual test script for browser-bound encrypted POS authority.              |
 | [Cash-shift acceptance](06-delivery/cash-shift-opening-acceptance.md)       | Manual test script for an auditable cashier opening float.                 |
 | [Manual tester guide](06-delivery/manual-tester-guide.md)                   | Current feature coverage, setup, exploratory tests, and boundaries.        |
-| [Testing hub](07-testing/README.md)                                         | Tester index and dedicated scripts for implemented slices.                 |
-| [Testing hub](07-testing/README.md)                                         | Tester index and dedicated scripts for implemented slices.                 |
 | [Testing hub](07-testing/README.md)                                         | Tester index and dedicated scripts for implemented slices.                 |
 | [Repository review](06-delivery/repository-review-2026-07-25.md)            | Review evidence, resolved findings, and remediation order.                 |
 

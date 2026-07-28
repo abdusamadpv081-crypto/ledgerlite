@@ -125,24 +125,40 @@ deferred until the encrypted POS outbox exists.
 
 ## POS sync endpoint contract
 
-**Proposed endpoint:** `POST /api/v1/pos/sync/events`
+**Cash-sale endpoint:**
+`POST /api/v1/companies/:companyId/branches/:branchId/pos/sales/sync`
 
-One request carries a bounded ordered batch of immutable local events. Each event includes:
+The first sync endpoint receives one immutable, signed cash-sale event. Batches
+will follow only after the single-event acknowledgement/retry path is proven.
+Each event includes:
 
 ```text
 eventId, eventType, schemaVersion, occurredAt, localSequence,
-companyId, branchId, deviceId, cashierId, shiftId,
-policyVersion, idempotencyKey, payload
+companyId, branchId, deviceId, cashierUserId, shiftId,
+authorityGrantId, authorityPolicyId, authorityPolicyVersion,
+payment, line snapshots, totals, deviceSignature
 ```
 
 Each returned result includes:
 
 ```text
-eventId, resultStatus, serverTransactionId?, journalEntryId?,
-receiptId?, rejectionCode?, rejectionMessage?, acknowledgedAt
+eventId, status, saleId?, journalEntryId?, localReceiptId?,
+stockException?, rejectionCode?, rejectionMessage?, acknowledgedAt
 ```
 
-`resultStatus` is one of `accepted`, `duplicate_accepted`, `rejected`, or `requires_review`. Retries of an accepted event must return the original acknowledgement rather than create new financial effects.
+`status` is one of `accepted`, `duplicate_accepted`,
+`accepted_with_stock_exception`, or `rejected`. Retries of an accepted event
+must return the original acknowledgement rather than create new financial
+effects. The event ID is the idempotency key; a replay with different signed
+content is rejected.
+
+The request needs a session actor with `pos.sale.create` in the route scope,
+but it also needs a valid registered-device signature and an offline grant
+snapshot matching the event. The server accepts the signed historical price and
+tax snapshots after validating their tenant references and arithmetic. It does
+not substitute a newer catalogue price for a completed offline cash sale. See
+[the cash-sale synchronization contract](../03-domain/pos-sale-sync-contract.md)
+for the exact event and posting rules.
 
 ## Error conventions
 
