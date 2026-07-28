@@ -135,7 +135,8 @@ function arrayBuffer(value: Uint8Array): ArrayBuffer {
   return copy.buffer;
 }
 function unsignedEvent(input: SaleSyncInput): PosCashSaleEvent {
-  const { deviceSignature: _deviceSignature, ...event } = input;
+  const event = { ...input };
+  Reflect.deleteProperty(event, "deviceSignature");
   return event;
 }
 function payloadDigest(event: SaleSyncInput): Buffer {

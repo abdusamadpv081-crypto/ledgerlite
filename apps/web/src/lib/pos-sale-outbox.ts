@@ -98,13 +98,11 @@ function base64Url(value: Uint8Array): string {
 function eventForSignature(
   sale: LocalCashSaleDraft | LocalCashSaleEvent,
 ): PosCashSaleEvent {
-  const {
-    acknowledgement: _acknowledgement,
-    deviceSignature: _deviceSignature,
-    status: _status,
-    version: _version,
-    ...event
-  } = sale as LocalCashSaleEvent;
+  const event = { ...(sale as LocalCashSaleEvent) };
+  Reflect.deleteProperty(event, "acknowledgement");
+  Reflect.deleteProperty(event, "deviceSignature");
+  Reflect.deleteProperty(event, "status");
+  Reflect.deleteProperty(event, "version");
   return event;
 }
 
