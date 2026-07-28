@@ -79,9 +79,9 @@ export class AuthController {
   async login(
     @Query("returnTo") returnTo: string | undefined,
     @Res() reply: FastifyReply,
-  ): Promise<void> {
+  ): Promise<FastifyReply> {
     const started = await this.oidcLogin.start(returnTo);
-    await reply.redirect(started.authorizationUrl.toString());
+    return reply.redirect(started.authorizationUrl.toString());
   }
 
   @Get("callback")
@@ -89,13 +89,13 @@ export class AuthController {
     @Query("state") state: string | undefined,
     @Req() request: FastifyRequest,
     @Res() reply: FastifyReply,
-  ): Promise<void> {
+  ): Promise<FastifyReply> {
     const completed = await this.oidcLogin.complete(request.url, state);
     reply.setCookie(SESSION_COOKIE_NAME, completed.session.token, {
       ...sessionCookieOptions,
       expires: completed.session.expiresAt,
     });
-    await reply.redirect(webApplicationReturnUrl(completed.returnTo));
+    return reply.redirect(webApplicationReturnUrl(completed.returnTo));
   }
 
   @Post("logout")

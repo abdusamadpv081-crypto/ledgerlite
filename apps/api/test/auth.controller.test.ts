@@ -31,6 +31,7 @@ class ReplyStub {
   }
 
   redirect(url: string) {
+    this.statusCode ??= 302;
     this.redirectUrl = url;
     return this;
   }
@@ -57,9 +58,14 @@ describe("AuthController", () => {
     );
     const reply = new ReplyStub();
 
-    await controller.login("/pos", reply as unknown as FastifyReply);
+    const result = await controller.login(
+      "/pos",
+      reply as unknown as FastifyReply,
+    );
 
     expect(requestedReturnTo).toBe("/pos");
+    expect(result).toBe(reply);
+    expect(reply.statusCode).toBe(302);
     expect(reply.redirectUrl).toBe("https://identity.example/authorize");
   });
 
@@ -87,7 +93,7 @@ describe("AuthController", () => {
     );
     const reply = new ReplyStub();
 
-    await controller.callback(
+    const result = await controller.callback(
       "callback-state",
       {
         url: "/api/v1/auth/callback?code=code&state=callback-state",
@@ -99,6 +105,8 @@ describe("AuthController", () => {
       "/api/v1/auth/callback?code=code&state=callback-state",
     );
     expect(callbackState).toBe("callback-state");
+    expect(result).toBe(reply);
+    expect(reply.statusCode).toBe(302);
     expect(reply.setCookieCall).toEqual({
       name: SESSION_COOKIE_NAME,
       options: {
