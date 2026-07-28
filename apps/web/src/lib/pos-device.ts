@@ -94,6 +94,15 @@ export type EncryptedPosSaleOutboxRecord = Readonly<{
   initializationVector: ArrayBuffer;
   updatedAt: string;
 }>;
+export type PosSaleSequenceRecord = Readonly<{
+  id: string;
+  companyId: string;
+  branchId: string;
+  deviceId: string;
+  cashierUserId: string;
+  nextLocalSequence: number;
+  updatedAt: string;
+}>;
 export type EncryptedPosCatalogueRecord = Readonly<{
   id: string;
   companyId: string;
@@ -117,6 +126,7 @@ export class PosDeviceDatabase extends Dexie {
   cashierPins!: Table<EncryptedCashierPinRecord, string>;
   cashierShifts!: Table<EncryptedCashShiftRecord, string>;
   saleOutbox!: Table<EncryptedPosSaleOutboxRecord, string>;
+  saleSequences!: Table<PosSaleSequenceRecord, string>;
   posCatalogues!: Table<EncryptedPosCatalogueRecord, string>;
 
   constructor() {
@@ -197,6 +207,24 @@ export class PosDeviceDatabase extends Dexie {
         "&id, companyId, branchId, deviceId, cashierUserId, shiftId, updatedAt",
       saleOutbox:
         "&id, companyId, branchId, deviceId, cashierUserId, shiftId, authorityGrantId, localSequence, status, occurredAt, updatedAt",
+      posCatalogues:
+        "&id, companyId, branchId, deviceId, cashierUserId, refreshedAt, updatedAt",
+    });
+    this.version(8).stores({
+      devices: "&id, companyId, branchId, state, deviceId, updatedAt",
+      cacheKeys: "&id, createdAt",
+      offlineAuthorities:
+        "&id, companyId, branchId, deviceId, cashierUserId, expiresAt, updatedAt",
+      offlineAuthorityAttempts:
+        "&id, companyId, branchId, deviceId, cashierUserId, updatedAt",
+      cashierPins:
+        "&id, companyId, branchId, deviceId, cashierUserId, pinVersion, updatedAt",
+      cashierShifts:
+        "&id, companyId, branchId, deviceId, cashierUserId, shiftId, updatedAt",
+      saleOutbox:
+        "&id, companyId, branchId, deviceId, cashierUserId, shiftId, authorityGrantId, localSequence, status, occurredAt, updatedAt",
+      saleSequences:
+        "&id, companyId, branchId, deviceId, cashierUserId, updatedAt",
       posCatalogues:
         "&id, companyId, branchId, deviceId, cashierUserId, refreshedAt, updatedAt",
     });

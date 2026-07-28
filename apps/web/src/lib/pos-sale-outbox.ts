@@ -16,6 +16,7 @@ import {
   type LocalPosDevice,
   POS_SALE_OUTBOX_VERSION,
   type EncryptedPosSaleOutboxRecord,
+  type PosSaleSequenceRecord,
   posBrowserCrypto,
   posDeviceDatabase,
   signDevicePayload,
@@ -157,6 +158,10 @@ function currency(value: string): string {
 
 function saleId(scope: OfflineAuthorityScope, eventId: string): string {
   return `${scope.companyId}:${scope.branchId}:${scope.deviceId}:${scope.cashierUserId}:${eventId}`;
+}
+
+function saleSequenceId(scope: OfflineAuthorityScope): string {
+  return `${scope.companyId}:${scope.branchId}:${scope.deviceId}:${scope.cashierUserId}`;
 }
 
 function scopeMatches(
@@ -534,8 +539,46 @@ export async function enqueueLocalCashSale(
 async function nextLocalSequence(
   scope: OfflineAuthorityScope,
 ): Promise<number> {
-  const records = await posDeviceDatabase()
-    .saleOutbox.filter(
+  const database = posDeviceDatabase();
+  return database.transaction(
+    "rw",
+    database.saleOutbox,
+    database.saleSequences,
+    async () => {
+      const id = saleSequenceId(scope);
+      const existing = await database.saleSequences.get(id);
+      const firstSequence = existing
+        ? existing.nextLocalSequence
+        : await firstAvailableSequence(database.saleOutbox, scope);
+      if (!Number.isSafeInteger(firstSequence) || firstSequence < 1)
+        throw new Error(
+          "This POS device has exhausted its local sale sequence.",
+        );
+      if (firstSequence >= Number.MAX_SAFE_INTEGER)
+        throw new Error(
+          "This POS device has exhausted its local sale sequence.",
+        );
+      const counter: PosSaleSequenceRecord = {
+        id,
+        companyId: scope.companyId,
+        branchId: scope.branchId,
+        deviceId: scope.deviceId,
+        cashierUserId: scope.cashierUserId,
+        nextLocalSequence: firstSequence + 1,
+        updatedAt: new Date().toISOString(),
+      };
+      await database.saleSequences.put(counter);
+      return firstSequence;
+    },
+  );
+}
+
+async function firstAvailableSequence(
+  saleOutbox: ReturnType<typeof posDeviceDatabase>["saleOutbox"],
+  scope: OfflineAuthorityScope,
+): Promise<number> {
+  const records = await saleOutbox
+    .filter(
       (record) =>
         record.companyId === scope.companyId &&
         record.branchId === scope.branchId &&

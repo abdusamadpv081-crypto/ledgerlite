@@ -126,6 +126,7 @@ beforeEach(async () => {
     database.cacheKeys.clear(),
     database.posCatalogues.clear(),
     database.saleOutbox.clear(),
+    database.saleSequences.clear(),
   ]);
 });
 
@@ -135,6 +136,21 @@ afterEach(() => {
 });
 
 describe("local POS sale outbox", () => {
+  it("reserves distinct local sequences for concurrent tabs", async () => {
+    const [first, second] = await Promise.all([
+      enqueueLocalCashSale(saleInput()),
+      enqueueLocalCashSale(
+        saleInput({
+          eventId: "8ee5d5a9-2b49-4382-b481-8d460d741dc7",
+          localReceiptId: "211de55c-c562-49a1-a4cb-d8b38915dd83",
+        }),
+      ),
+    ]);
+
+    expect([first.localSequence, second.localSequence].sort()).toEqual([1, 2]);
+    expect(await localCashSales(scope)).toHaveLength(2);
+  });
+
   it("snapshots cash-sale pricing and VAT using exact decimal arithmetic", () => {
     const sale = createLocalCashSale(saleInput());
 
