@@ -67,16 +67,17 @@ export type SaleSyncInput = PosCashSaleEvent &
   }>;
 export type SaleSyncResult =
   | Readonly<{
+      acknowledgedAt: string;
       eventId: string;
       journalEntryId: string;
       localReceiptId: string;
-      acknowledgedAt: string;
       saleId: string;
       status:
         "accepted" | "duplicate_accepted" | "accepted_with_stock_exception";
       stockException: boolean;
     }>
   | Readonly<{
+      acknowledgedAt: string;
       eventId: string;
       rejectionCode: string;
       rejectionMessage: string;
@@ -156,6 +157,7 @@ function timestamp(value: string): number {
 }
 function rejection(eventId: string, error: SaleSyncRejection): SaleSyncResult {
   return {
+    acknowledgedAt: new Date().toISOString(),
     eventId,
     rejectionCode: error.code,
     rejectionMessage: error.message,

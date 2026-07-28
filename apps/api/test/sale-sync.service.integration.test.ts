@@ -344,6 +344,7 @@ describe("SaleSyncService", () => {
       tampered,
     );
     expect(invalidSignature.data).toMatchObject({
+      acknowledgedAt: expect.any(String),
       status: "rejected",
       rejectionCode: "EVENT_SIGNATURE_INVALID",
     });
