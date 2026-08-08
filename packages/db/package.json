@@ -20,7 +20,7 @@
     "pg": "^8.0.0"
   },
   "devDependencies": {
-    "@types/pg": "^8.0.0",
+    "@types/pg": "^8.20.4",
     "drizzle-kit": "^0.31.0",
     "vitest": "3.0.0"
   }
