@@ -16,12 +16,12 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "drizzle-orm": "^0.45.2",
-    "pg": "^8.0.0"
+    "drizzle-orm": "^0.45.4",
+    "pg": "^8.23.1"
   },
   "devDependencies": {
-    "@types/pg": "^8.0.0",
-    "drizzle-kit": "^0.31.0",
+    "@types/pg": "^8.23.1",
+    "drizzle-kit": "^0.31.11",
     "vitest": "3.0.0"
   }
 }
